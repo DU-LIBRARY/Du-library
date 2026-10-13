@@ -1,14 +1,14 @@
 Darul Uloom Library: offline app
 ================================
 
-Upload every file in this folder to the top level of a GitHub Pages
-repository. There are no sub-folders: index.html, sw.js,
-manifest.webmanifest, the four .png icons and the hidden .nojekyll file
-(the .nojekyll file is optional).
+Three sections, switched with the tabs at the bottom:
+  Search      index.html    the catalogue search
+  Shelf Map   shelves.html  which shelf each book is on (a saved copy; books are moved in the Shelf Map in Claude)
+  3D Library  3d.html       the library room in 3D
 
-Open the site once with signal, then choose "Add to Home Screen".
-After that, it opens and searches with no internet.
+Open the site once with signal and add it to the home screen. After that, all three
+sections work with no internet. Fonts (fonts/) and the 3D engine (lib/) are part of
+the app, so nothing is loaded from outside. Their licences are in those folders.
 
-To update the catalogue later, replace index.html and sw.js with the new
-copies Claude gives you (sw.js carries a new version number). Phones pick up
-the update the next time the app is opened with signal.
+Updates are built and uploaded by Claude: each update stamps a new version in sw.js,
+and phones pick it up the next time the app is opened with signal.

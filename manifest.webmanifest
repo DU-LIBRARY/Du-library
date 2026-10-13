@@ -1,7 +1,7 @@
 {
   "name": "Darul Uloom Library",
   "short_name": "DU Library",
-  "description": "Search the Darul Uloom library catalogue, even without signal.",
+  "description": "Search the Darul Uloom library catalogue, see the shelves and walk the 3D library, even without signal.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./",
@@ -11,8 +11,23 @@
   "background_color": "#f3f5f2",
   "theme_color": "#0e5a48",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
