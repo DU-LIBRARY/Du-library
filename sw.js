@@ -1,6 +1,6 @@
 // Darul Uloom Library: keeps the catalogue on the device so it opens and searches with no signal.
 // When a new catalogue is uploaded, bump VERSION so phones fetch it on their next visit online.
-const VERSION = '2026-10-12a';
+const VERSION = '2026-10-13a';
 const CACHE = 'du-library-' + VERSION;
 const FONT_CACHE = 'du-library-fonts';
 const CORE = ['./', './index.html', './manifest.webmanifest',

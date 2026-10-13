@@ -597,20 +597,32 @@ body { background: var(--bg); color: var(--ink); }
   var foot = document.getElementById('foot');
   var note = document.createElement('span'); note.className = 'offline-note';
   function say(ok, text) { note.className = 'offline-note' + (ok ? ' ok' : ''); note.innerHTML = '<i></i>' + text; if (!note.parentNode && foot) foot.appendChild(note); }
-  if (!('serviceWorker' in navigator)) { say(false, 'This browser can’t save the catalogue for offline use.'); return; }
+  if (!('serviceWorker' in navigator) || !('caches' in window)) { say(false, 'This browser can’t save the catalogue for offline use.'); return; }
+  var page = new URL('index.html', location.href).href;
+  // The real test: is the catalogue page stored on this device?
+  function check() {
+    return caches.match(page).then(function (hit) {
+      if (hit) say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you’re offline now'));
+      else if (navigator.onLine) say(false, 'Saving the catalogue to this device…');
+      else say(false, 'Not saved yet. Open the app once with signal.');
+      return !!hit;
+    }).catch(function () { return false; });
+  }
+  check();
   var hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' }).then(function (reg) {
-    say(false, 'Saving the catalogue to this device…');
-    return navigator.serviceWorker.ready;
-  }).then(function () {
-    say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you are offline now'));
-  }).catch(function () { say(false, 'Couldn’t save for offline use. Open it once more with signal.'); });
+  // Registering also checks for a newer catalogue. With no signal that check fails, which is fine:
+  // the copy already saved on the device keeps working.
+  navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' })
+    .then(function () { return navigator.serviceWorker.ready; })
+    .then(function () { setTimeout(check, 400); })
+    .catch(function () { check().then(function (ok) { if (!ok && navigator.onLine) say(false, 'Couldn’t save for offline use yet. Close the app and open it again with signal.'); }); });
   // a newer catalogue was saved in the background: reload once to show it
   navigator.serviceWorker.addEventListener('controllerchange', function () {
     if (hadController && !sessionStorage.getItem('du-reloaded')) { try { sessionStorage.setItem('du-reloaded', '1'); } catch (e) {} location.reload(); }
   });
-  window.addEventListener('offline', function () { say(true, 'Saved on this device · you are offline now'); });
-  window.addEventListener('online', function () { say(true, 'Saved on this device · works without signal'); });
+  window.addEventListener('offline', check);
+  window.addEventListener('online', check);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
 </body>
