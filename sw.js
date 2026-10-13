@@ -1,10 +1,10 @@
 // Darul Uloom Library: keeps the catalogue on the device so it opens and searches with no signal.
 // When a new catalogue is uploaded, bump VERSION so phones fetch it on their next visit online.
-const VERSION = '2026-10-13a';
+const VERSION = '2026-10-13b';
 const CACHE = 'du-library-' + VERSION;
 const FONT_CACHE = 'du-library-fonts';
 const CORE = ['./', './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';
 
 async function cacheFonts() {
@@ -24,7 +24,10 @@ async function cacheFonts() {
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    await c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })));
+    // the page must be saved; a missing icon or manifest must never stop the app working offline
+    await c.add(new Request('./index.html', { cache: 'reload' }));
+    await Promise.all(CORE.filter(u => u !== './index.html').map(u =>
+      fetch(new Request(u, { cache: 'reload' })).then(r => r.ok && c.put(u, r)).catch(() => {})));
     await cacheFonts();
     await self.skipWaiting();
   })());

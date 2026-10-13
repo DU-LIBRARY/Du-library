@@ -1,8 +1,11 @@
 Darul Uloom Library: offline app
 ================================
 
-Upload everything in this folder (index.html, sw.js, manifest.webmanifest,
-.nojekyll and the icons folder) to the root of a GitHub Pages repository.
+Upload every file in this folder to the top level of a GitHub Pages
+repository. There are no sub-folders: index.html, sw.js,
+manifest.webmanifest, the four .png icons and the hidden .nojekyll file
+(the .nojekyll file is optional).
+
 Open the site once with signal, then choose "Add to Home Screen".
 After that, it opens and searches with no internet.
 
