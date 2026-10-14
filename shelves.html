@@ -148,6 +148,33 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .res .rp { color: var(--gilt); font-size: 0.78rem; grid-column: 1; overflow-wrap: anywhere; font-family: var(--f-ar); }
 .res .rl { grid-row: 1 / span 3; }
 .photonote { color: var(--faint); font-size: 0.75rem; }
+/* book card: hover a spine (or tap it on a touch screen) */
+.bookcard { position: fixed; z-index: 40; left: 0; top: 0; width: max-content; max-width: min(340px, calc(100vw - 24px)); min-width: 220px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px 12px;
+  box-shadow: inset 0 3px 0 var(--g, var(--accent)), 0 2px 6px rgb(16 40 32 / 10%), 0 16px 40px rgb(16 40 32 / 18%);
+  pointer-events: none; opacity: 0; visibility: hidden; transform: translateY(5px) scale(.98); transform-origin: var(--ax, 50%) 100%;
+  transition: opacity .14s ease, transform .16s cubic-bezier(.2,.8,.2,1), visibility 0s linear .16s; }
+.bookcard.below { transform-origin: var(--ax, 50%) 0; transform: translateY(-5px) scale(.98); }
+.bookcard.on { opacity: 1; visibility: visible; transform: none; transition: opacity .14s ease, transform .16s cubic-bezier(.2,.8,.2,1); }
+.bookcard.touch { pointer-events: auto; }
+.bookcard .bk-g { display: flex; align-items: center; gap: 6px; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 1px 0 7px; }
+.bookcard .bk-g i { width: 8px; height: 8px; border-radius: 2px; background: var(--g, var(--accent)); flex: none; }
+.bookcard .bk-g .ar { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.bookcard .bk-t { font-family: var(--f-title); font-weight: 700; font-size: 1.22rem; line-height: 1.35; margin: 0; overflow-wrap: anywhere; text-wrap: balance; }
+.bookcard .bk-a { font-family: var(--f-ar); color: var(--muted); font-size: .86rem; line-height: 1.45; margin: 3px 0 0; overflow-wrap: anywhere; }
+.bookcard .bk-p { display: flex; gap: 10px; align-items: baseline; margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line); }
+.bookcard .bk-p b { font-size: .64rem; text-transform: uppercase; letter-spacing: .09em; color: var(--gilt); font-weight: 600; flex: none; }
+.bookcard .bk-p span { font-family: var(--f-ar); font-size: .92rem; line-height: 1.4; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.bookcard .bk-f { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.bookcard .bk-f span { font-size: .72rem; border-radius: 999px; padding: 1px 8px; background: var(--accent-soft); color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bookcard .bk-f span.y { background: var(--gilt-soft); color: var(--gilt); }
+.bookcard .bk-f span.w { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.bookcard .bk-go { margin-top: 11px; width: 100%; border: 0; border-radius: 8px; padding: 8px 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: .85rem; cursor: pointer; }
+.bookcard .arrow { position: absolute; left: var(--ax, 50%); bottom: -7px; width: 12px; height: 12px; margin-left: -6px; background: var(--surface);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
+.bookcard.below .arrow { top: -7px; bottom: auto; transform: rotate(225deg); }
+.spine.peek { outline: 2px solid var(--surface); outline-offset: -2px; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .bookcard, .bookcard.on { transition: none; } }
 .spine.hit { outline: 2px solid var(--gilt); outline-offset: 1px; animation: pulse 1.2s ease-in-out 3; z-index: 1; }
 @keyframes pulse { 50% { outline-color: transparent; } }
 .cavity .empty { color: var(--faint); font-size: 0.8rem; align-self: center; width: 100%; text-align: center; }
@@ -540,22 +567,31 @@ details.settings summary { cursor: pointer; color: var(--muted); }
   }
   // A photo shows only while the item is exactly the set that was photographed (same number of volumes).
   const photoOf = it => { const p = PHOTOS[it.b]; return p && p.n === it.n ? p : null; };
-  const tip = b => b ? b.t + (b.p ? ' — ' + b.p : '') : '';
+  const tip = b => b ? [b.t, b.a, b.p].filter(Boolean).join(' — ') : '';
+  // a set's own size first, then how many of the catalogued copies are here
+  function volText(b, n) {
+    const per = b.v || 1, cps = b.c || 1;
+    const vv = k => k === 1 ? '1 vol' : `${k} vols`;
+    return cps > 1
+      ? (n % per === 0 ? `${vv(per)} · ${n / per} of ${cps} copies` : `${vv(n)} · ${cps} copies of ${vv(per)}`)
+      : (n === per ? vv(per) : `${n} of ${per} vols`);
+  }
   function spinesHTML(s) {
     if (!s.items.length) return '<span class="empty">empty</span>';
     const H = ui.titles ? 144 : 68;
-    return s.items.map(it => {
+    return s.items.map((it, i) => {
       const b = BY.get(it.b); const k = b ? b.k : 0;
       const p = photoOf(it);
+      const at = `data-s="${esc(s.id)}" data-i="${i}"`;
       if (p) {
         const hp = Math.round(H * Math.min(1, p.r * 0.84)), wp = Math.max(2, Math.round(hp * p.w / p.h));
-        return `<span class="spine photo${ui.hit && ui.hit === it.b ? ' hit' : ''}" style="height:${hp}px;width:${wp}px;background-image:url(${p.src})" title="${esc(tip(b) || it.b)}" role="img" aria-label="${esc(tip(b) || it.b)}"></span>`;
+        return `<span class="spine photo${ui.hit && ui.hit === it.b ? ' hit' : ''}" style="height:${hp}px;width:${wp}px;background-image:url(${p.src})" ${at} role="img" aria-label="${esc(tip(b) || it.b)}"></span>`;
       }
       const h = 72 + ((it.b.length * 7 + it.n * 3) % 25);
       const hit = ui.hit && ui.hit === it.b ? ' hit' : '';
       const h2 = ui.titles ? 84 + ((it.b.length * 7 + it.n * 3) % 17) : h;
       const txt = ui.titles ? `<span class="st">${esc(b ? b.t : it.b)}</span>${it.n > 1 ? `<span class="sv">${it.n}</span>` : ''}` : '';
-      return `<span class="spine${hit}" style="--n:${it.n};height:${h2}%;background:${genreColor(k)}" title="${esc(tip(b) || it.b)}">${txt}</span>`;
+      return `<span class="spine${hit}" style="--n:${it.n};height:${h2}%;background:${genreColor(k)}" ${at} aria-label="${esc(tip(b) || it.b)}">${txt}</span>`;
     }).join('');
   }
   function renderCase() {
@@ -585,12 +621,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
     const g = genreSummary(s);
     const items = s.items.map((it, i) => {
       const b = BY.get(it.b) || { t: it.b, a: '', k: 0 };
-      const per = b.v || 1, cps = b.c || 1;
-      const vv = n => n === 1 ? '1 vol' : `${n} vols`;
-      // a set's own size first, then how many of the catalogued copies are here
-      const vol = cps > 1
-        ? (it.n % per === 0 ? `${vv(per)} · ${it.n / per} of ${cps} copies` : `${vv(it.n)} · ${cps} copies of ${vv(per)}`)
-        : (it.n === per ? vv(per) : `${it.n} of ${per} vols`);
+      const vol = volText(b, it.n);
       const cp = '';
       return `<li class="it${ui.sel.has(i) ? ' sel' : ''}${ui.hit === it.b ? ' hit' : ''}" data-i="${i}">
         ${canWrite ? `<input type="checkbox" data-sel="${i}" ${ui.sel.has(i) ? 'checked' : ''} aria-label="Select">` : '<span></span>'}
@@ -640,6 +671,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
     return `<div class="list"><div class="tbl"><table><thead><tr><th>Shelf</th><th>Label</th><th>Vols</th><th>First book</th><th>Last book</th></tr></thead><tbody>${rows.join('')}</tbody></table></div><div class="legend">${legend}</div></div>`;
   }
   function render() {
+    { const bc = document.getElementById('bookcard'); if (bc && bc.classList.contains('on') && !bc.classList.contains('touch')) hideCard(true); }
     renderStats(); renderBanner(); renderStrip();
     for (const b of $('#view').children) b.setAttribute('aria-pressed', String(b.dataset.view === ui.view));
     if (ui.view === 'list') { $('#main').innerHTML = renderList(); return; }
@@ -696,11 +728,92 @@ details.settings summary { cursor: pointer; color: var(--muted); }
     const i = order.indexOf(id); return order[i + dir];
   }
 
+  // ---------- book card ----------
+  const card = document.createElement('div');
+  card.className = 'bookcard'; card.id = 'bookcard'; card.setAttribute('role', 'tooltip');
+  document.body.appendChild(card);
+  let cardEl = null, cardHide = 0, lastPointer = 'mouse', cardShelf = null, cardItem = -1;
+  function fillCard(sp) {
+    const s = shelves.get(sp.dataset.s); const it = s && s.items[+sp.dataset.i];
+    if (!it) return false;
+    const b = BY.get(it.b) || { t: it.b, k: 0 };
+    const cat = CATS[b.k];
+    cardShelf = s.id; cardItem = +sp.dataset.i;
+    card.style.setProperty('--g', genreColor(b.k || 0));
+    card.innerHTML = `<div class="bk-g"><i></i>${cat ? `${esc(cat.en)} · <span class="ar">${esc(cat.ar)}</span>` : ''}</div>
+      <p class="bk-t" dir="auto">${esc(b.t)}</p>${b.a ? `<p class="bk-a" dir="auto">${esc(b.a)}</p>` : ''}
+      <div class="bk-p"><b>Print</b><span dir="auto">${esc(b.p || 'not recorded')}</span></div>
+      <div class="bk-f"><span>${esc(volText(b, it.n))}</span>${b.y ? `<span class="y">d. ${b.y} AH</span>` : ''}<span class="w">${esc(code(s))} · no. ${cardItem + 1}</span></div>
+      ${lastPointer === 'touch' && ui.shelfId !== s.id ? '<button type="button" class="bk-go" id="bkgo">Open this shelf</button>' : ''}
+      <span class="arrow" aria-hidden="true"></span>`;
+    return true;
+  }
+  function placeCard(sp, px) {
+    const r = sp.getBoundingClientRect();
+    const cw = card.offsetWidth, ch = card.offsetHeight, m = 10, gap = 12;
+    const topLimit = ($('.bar')?.getBoundingClientRect().bottom || 0) + m;
+    // narrow spines: point at the middle; wide sets: follow the pointer along the set
+    const vis = { l: Math.max(r.left, 0), r: Math.min(r.right, innerWidth) };
+    const ax = r.width > 60 && px != null ? Math.min(vis.r - 8, Math.max(vis.l + 8, px)) : (vis.l + vis.r) / 2;
+    const x = Math.min(innerWidth - cw - m, Math.max(m, ax - cw / 2));
+    let y = r.top - ch - gap, below = false;
+    if (y < topLimit) { y = r.bottom + gap; below = true; }
+    const botLimit = innerHeight - m - ($('.apptabs')?.offsetHeight || 0);   // keep clear of the app's tab bar
+    if (below && y + ch > botLimit) { y = Math.max(topLimit, botLimit - ch); }
+    card.classList.toggle('below', below);
+    card.style.left = Math.round(x) + 'px'; card.style.top = Math.round(y) + 'px';
+    card.style.setProperty('--ax', Math.round(Math.min(cw - 16, Math.max(16, ax - x))) + 'px');
+  }
+  function showCard(sp, px, touch) {
+    clearTimeout(cardHide);
+    if (cardEl !== sp || touch) { if (!fillCard(sp)) return; }
+    if (cardEl && cardEl !== sp) cardEl.classList.remove('peek');
+    cardEl = sp; sp.classList.add('peek');
+    card.classList.toggle('touch', !!touch);
+    placeCard(sp, px);
+    card.classList.add('on');
+  }
+  function hideCard(now) {
+    clearTimeout(cardHide);
+    const go = () => { card.classList.remove('on', 'touch'); if (cardEl) cardEl.classList.remove('peek'); cardEl = null; };
+    if (now) go(); else cardHide = setTimeout(go, 90);
+  }
+  document.addEventListener('pointerdown', e => { lastPointer = e.pointerType || 'mouse'; if (!e.target.closest('#bookcard') && !e.target.closest('.spine')) hideCard(true); }, true);
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType === 'touch') return;
+    const sp = e.target.closest('.spine[data-s]');
+    if (sp) showCard(sp, e.clientX);
+  });
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch' || !cardEl) return;
+    const sp = e.target.closest('.spine[data-s]');
+    if (sp === cardEl && sp.getBoundingClientRect().width > 60) placeCard(sp, e.clientX);
+  });
+  document.addEventListener('pointerout', e => {
+    if (e.pointerType === 'touch') return;
+    const sp = e.target.closest('.spine[data-s]');
+    if (sp && !(e.relatedTarget && sp.contains(e.relatedTarget))) hideCard(false);
+  });
+  window.addEventListener('scroll', () => { if (card.classList.contains('on')) hideCard(true); }, { passive: true });
+  document.addEventListener('scroll', e => { if (e.target.classList?.contains('cavity') && card.classList.contains('on')) hideCard(true); }, { capture: true, passive: true });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCard(true); });
+  card.addEventListener('click', e => {
+    if (!e.target.closest('#bkgo')) return;
+    const s = shelves.get(cardShelf); const it = s && s.items[cardItem];
+    hideCard(true);
+    if (!s) return;
+    if (ui.shelfId !== s.id) ui.sel.clear();
+    ui.shelfId = s.id; ui.hit = it ? it.b : null; render();
+    if (window.innerWidth <= 900) $('#panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
   // ---------- events ----------
   document.addEventListener('click', e => {
     const t = e.target;
     const caseBtn = t.closest('[data-case]');
     if (caseBtn) { ui.view = 'case'; ui.caseId = caseBtn.dataset.case; ui.shelfId = ui.caseId === 'tray' ? 'tray' : null; ui.sel.clear(); render(); return; }
+    const tapped = t.closest('.spine[data-s]');
+    if (tapped && lastPointer === 'touch') { lastPointer = 'touch'; showCard(tapped, e.clientX, true); return; }
     const lv = t.closest('[data-shelf]');
     if (lv) { if (ui.shelfId !== lv.dataset.shelf) ui.sel.clear(); ui.shelfId = lv.dataset.shelf; render(); if (window.innerWidth <= 900) $('#panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const go = t.closest('[data-go]');
