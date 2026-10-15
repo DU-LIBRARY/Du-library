@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="The Darul Uloom library: search the catalogue, see the shelves and walk the 3D library, even without signal.">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0e5a48">
+<style>html{background:#f3f5f2}@media (prefers-color-scheme:dark){html{background:#0e1513}}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -81,12 +83,15 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 
 .stage { position: relative; height: min(70vh, 680px); min-height: 360px; border-radius: 12px; overflow: hidden; background: var(--scene); box-shadow: var(--shadow); touch-action: none; }
 .stage canvas { display: block; width: 100%; height: 100%; }
-.views { position: absolute; inset-inline-start: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); }
-.views button { border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(6px); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
+.views { position: absolute; inset-inline-start: 10px; top: 10px; display: flex; gap: 6px; max-width: calc(100% - 20px); overflow-x: auto; scrollbar-width: none; }
+.views button { flex: none; min-height: 36px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(6px); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 0.82rem; }
 .views button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .hint { position: absolute; inset-inline-end: 10px; bottom: 10px; font-size: 0.75rem; color: var(--muted); background: color-mix(in srgb, var(--surface) 80%, transparent); padding: 3px 10px; border-radius: 999px; pointer-events: none; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 0.9rem; }
 .loading[hidden] { display: none; }
+.loading { animation: breathe 1.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .loading { animation: none; } }
 .compass { position: absolute; inset-inline-start: 10px; bottom: 10px; font-size: 0.75rem; color: var(--muted); background: color-mix(in srgb, var(--surface) 80%, transparent); padding: 3px 10px; border-radius: 999px; pointer-events: none; }
 
 .strip { display: flex; gap: 6px; overflow-x: auto; padding-block: 12px 4px; scrollbar-width: thin; }
@@ -133,6 +138,8 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.78rem; color: var(--muted); padding: 0 14px 14px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend .ar { font-family: var(--f-ar); }
+.legendbox summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; padding: 0 14px 14px; min-height: 32px; }
+.legendbox[open] summary { padding-bottom: 8px; }
 .notes { color: var(--muted); font-size: 0.82rem; margin: 0; max-width: 70ch; }
 @media (max-width: 520px) { .stage { height: 62vh; } .loc b { font-size: 1rem; } }
 /* Walk me there: the walkthrough panel over the room */
@@ -169,7 +176,7 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
     <div class="loading" id="loading">Building the room…</div>
     <div class="views" role="group" aria-label="Viewpoint" id="views">
       <button type="button" data-view="door" aria-pressed="true">Entrance</button>
-      <button type="button" data-view="above" aria-pressed="false">From above</button>
+      <button type="button" data-view="above" aria-pressed="false">Above</button>
       <button type="button" data-view="left" aria-pressed="false">Left wall</button>
       <button type="button" data-view="right" aria-pressed="false">Right wall</button>
     </div>
@@ -191,7 +198,7 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
         <input id="q" type="search" dir="auto" placeholder="ابحث بالعنوان أو المؤلف · Title or author" aria-labelledby="find-h" autocomplete="off">
         <div class="results" id="results"></div>
       </div>
-      <div class="legend" id="legend"></div>
+      <details class="legendbox"><summary>What the colours mean</summary><div class="legend" id="legend"></div></details>
     </section>
   </div>
   <p class="notes" id="notes"></p>
