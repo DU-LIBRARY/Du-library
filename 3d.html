@@ -397,6 +397,14 @@ $('#loading').hidden = true;
 // Smaller sets have the title written down each spine.
 const TITLED = new Set(['A', 'B', 'C', 'D', 'E', 'F']);
 const BIG_SET = 4;
+// Spines are drawn at half size: a spine is a few dozen pixels wide on screen, and full size took ~900 MB,
+// which made iPhone Safari close the page. Each drawing is freed once it is on the graphics card.
+const SPINE_RES = 0.5;
+function spineCanvas(w, h) {
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * SPINE_RES)); c.height = Math.max(1, Math.round(h * SPINE_RES));
+  const g = c.getContext('2d'); g.scale(c.width / w, c.height / h);
+  return [c, g];
+}
 const spineGeo = new THREE.PlaneGeometry(1, 1);
 const ANISO = renderer.capabilities.getMaxAnisotropy();
 const AR_DIGITS = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
@@ -421,8 +429,7 @@ function spineBase(g, x, pw, ph, base) {
 function setCanvas(r, title, base) {
   // one canvas for the whole set; each volume shows its own slice
   const n = r.n, pw = 48, ph = Math.min(1200, Math.round(pw * r.vh[0] / (r.vw[0] * FILL)));
-  const c = document.createElement('canvas'); c.width = n * pw; c.height = ph;
-  const g = c.getContext('2d');
+  const [c, g] = spineCanvas(n * pw, ph);
   for (let j = 0; j < n; j++) spineBase(g, j * pw, pw, ph, base);
   // title panel running across the set
   const x0 = pw * 0.35, x1 = n * pw - pw * 0.35, y0 = ph * 0.22, y1 = ph * 0.5;
@@ -446,8 +453,7 @@ function setCanvas(r, title, base) {
 function singleCanvas(r, title, base) {
   // title written down the spine; shared by every volume of a small set
   const pw = 64, ph = Math.min(1600, Math.round(pw * r.vh[0] / (r.vw[0] * FILL)));
-  const c = document.createElement('canvas'); c.width = pw; c.height = ph;
-  const g = c.getContext('2d');
+  const [c, g] = spineCanvas(pw, ph);
   spineBase(g, 0, pw, ph, base);
   g.save(); g.translate(pw / 2, ph * 0.47); g.rotate(Math.PI / 2);
   g.direction = /[؀-ۿ]/.test(title) ? 'rtl' : 'ltr'; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -473,6 +479,7 @@ function buildSpines() {
     const big = r.n >= BIG_SET;
     const tex = new THREE.CanvasTexture(big ? setCanvas(r, title, base) : singleCanvas(r, title, base));
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
+    renderer.initTexture(tex); tex.image.width = tex.image.height = 1;   // on the card now; free the drawing
     const mat = new THREE.MeshBasicMaterial({ map: tex });
     const glow = mat.clone(); glow.color.set('#ffd98a');
     spineMats.set(r.ri, [mat, glow]);
