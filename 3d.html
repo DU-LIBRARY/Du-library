@@ -64,6 +64,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
   --scene: #121a17; --floor: #2a2620; --wall: #1d2421; --wood: #5a4331; --wood-dark: #3a2b1f; --mark: #5a4a17;
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%); color-scheme: dark; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { background: var(--bg); color: var(--ink); }
 body { font-family: var(--f-ui); font-size: 15px; line-height: 1.5; margin: 0; }
 .wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; }
@@ -137,6 +138,11 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 /* Walk me there: the walkthrough panel over the room */
 .walkbox { position: absolute; inset-inline: 8px; bottom: 8px; z-index: 3; max-height: calc(100% - 16px); overflow: auto; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 12px 14px; display: grid; gap: 8px; }
 .walkbox[hidden] { display: none; }
+.walkbox.slim { grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 8px 8px 8px 14px; }
+.walkbox.slim .wk-t { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.walkbox.slim .wk-m { min-width: 0; }
+.walkbox.slim .wk-b { flex-wrap: nowrap; }
+.walkbox.slim .wk-b button { min-width: 44px; padding-inline: 14px; }
 .stage.walking .hint, .stage.walking .compass { display: none; }
 .walkbox .wk-k { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 0; }
 .walkbox .wk-t { font-family: var(--f-title); font-weight: 700; font-size: 1.2rem; line-height: 1.35; margin: 0; overflow-wrap: anywhere; }
@@ -230,8 +236,8 @@ const used = s => s.items.reduce((n, [, c]) => n + c, 0);
 // ---------- stats ----------
 const vols = shelves.reduce((n, s) => n + used(s), 0);
 const trayN = tray ? used(tray) : 0;
-$('#stats').innerHTML = `<span><b>${D.cases.length}</b> of ${PER_SIDE * 2} cases filled</span><span><b>${vols.toLocaleString('en-GB')}</b> volumes</span>${trayN ? `<span><b>${trayN}</b> in tray</span>` : ''}<span class="pill"><i></i>Snapshot · ${esc(D.snap)}</span>`;
-$('#notes').textContent = `This is a fixed copy of the Shelf Map as it was saved on ${D.snap}. Moves made in the Shelf Map after that will not show here yet. Level 1 is the top shelf and books run right to left, as in the Shelf Map. Cases A to F, which have been checked against photos, have titles on their spines: sets of 4 or more volumes carry one title across all their volumes, with volume numbers, and smaller sets have the title down each spine. A set split over two shelves shows its title but no volume numbers. Case sizes and the aisle width are estimates.`;
+$('#stats').innerHTML = `<span><b>${D.cases.length}</b> cases</span><span><b>${vols.toLocaleString('en-GB')}</b> volumes shelved</span>${trayN ? `<span>${trayN.toLocaleString('en-GB')} not yet shelved</span>` : ''}<span class="pill"><i></i>Saved copy · ${esc(D.snap)}</span>`;
+$('#notes').textContent = `Shelves as saved on ${D.snap}. Level 1 is the top shelf and books run right to left, as in the Shelf Map. Cases A to F have titles on their spines, checked against photos; the rest are coloured by subject. Case sizes and the aisle width are estimates.`;
 
 // ---------- theme ----------
 function tok(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
@@ -471,23 +477,37 @@ function sliceGeo(n, k) {
   uv.needsUpdate = true; return g;
 }
 const spineMats = new Map();   // run -> [normal, highlighted]
+// Spines are drawn a few at a time between frames, so the room shows at once and stays smooth;
+// the case being looked at or walked to is drawn first.
+let spineQueue = null, spineFirst = null;
+function spinesFirst(caseId) { spineFirst = caseId; }
 function buildSpines() {
-  for (const r of runs) {
-    if (!TITLED.has(r.pos.caseId) || spinesByRun.has(r.ri)) continue;
-    const bk = BOOKS[r.b]; const title = bk ? bk.t : r.b;
-    const base = '#' + new THREE.Color(genreColor(bk ? bk.k : 0)).multiplyScalar(r.idx % 2 ? 1.1 : 0.9).getHexString();
-    const big = r.n >= BIG_SET;
-    const tex = new THREE.CanvasTexture(big ? setCanvas(r, title, base) : singleCanvas(r, title, base));
-    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
-    renderer.initTexture(tex); tex.image.width = tex.image.height = 1;   // on the card now; free the drawing
-    const mat = new THREE.MeshBasicMaterial({ map: tex });
-    const glow = mat.clone(); glow.color.set('#ffd98a');
-    spineMats.set(r.ri, [mat, glow]);
-    const list = [];
-    for (let m = 0; m < r.n; m++) { const s = new THREE.Mesh(big ? sliceGeo(r.n, m) : spineGeo, selRun === r.ri ? glow : mat); s.matrixAutoUpdate = false; scene.add(s); list.push(s); }
-    spinesByRun.set(r.ri, list);
-    placeRun(r, selRun === r.ri ? 0.06 : 0);
-  }
+  spineQueue = runs.filter(r => TITLED.has(r.pos.caseId));
+  (function slice() {
+    const t0 = performance.now();
+    while (spineQueue.length && performance.now() - t0 < 10) {
+      let k = spineFirst ? spineQueue.findIndex(r => r.pos.caseId === spineFirst) : 0;
+      if (k < 0) { spineFirst = null; k = 0; }
+      buildSpine(spineQueue.splice(k, 1)[0]);
+    }
+    if (spineQueue.length) setTimeout(slice, 0);
+  })();
+}
+function buildSpine(r) {
+  if (spinesByRun.has(r.ri)) return;
+  const bk = BOOKS[r.b]; const title = bk ? bk.t : r.b;
+  const base = '#' + new THREE.Color(genreColor(bk ? bk.k : 0)).multiplyScalar(r.idx % 2 ? 1.1 : 0.9).getHexString();
+  const big = r.n >= BIG_SET;
+  const tex = new THREE.CanvasTexture(big ? setCanvas(r, title, base) : singleCanvas(r, title, base));
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
+  renderer.initTexture(tex); tex.image.width = tex.image.height = 1;   // on the card now; free the drawing
+  const mat = new THREE.MeshBasicMaterial({ map: tex });
+  const glow = mat.clone(); glow.color.set('#ffd98a');
+  spineMats.set(r.ri, [mat, glow]);
+  const list = [];
+  for (let m = 0; m < r.n; m++) { const s = new THREE.Mesh(big ? sliceGeo(r.n, m) : spineGeo, selRun === r.ri ? glow : mat); s.matrixAutoUpdate = false; scene.add(s); list.push(s); }
+  spinesByRun.set(r.ri, list);
+  placeRun(r, selRun === r.ri ? 0.06 : 0);
 }
 const fontReady = document.fonts ? Promise.race([document.fonts.load('700 34px Amiri', 'كتاب'), new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
 fontReady.then(buildSpines, buildSpines);
@@ -555,6 +575,7 @@ function renderStrip() {
   $('#strip').innerHTML = tiles.join('');
 }
 function markCase(id) {
+  if (id) spinesFirst(id);
   curCase = id; for (const b of $('#strip').querySelectorAll('[data-case]')) b.setAttribute('aria-current', String(b.dataset.case === id));
   const row = $('#levels'); row.hidden = !id;
   if (id) row.innerHTML = `<span>Close up on Case ${esc(id)}${TITLED.has(id) ? ' to read titles' : ''}:</span>` + Array.from({ length: LEVELS }, (_, i) => `<button type="button" data-level="${i + 1}" aria-pressed="false" aria-label="Level ${i + 1}">${esc(id)}${i + 1}</button>`).join('');
@@ -677,6 +698,7 @@ function alongOf(r) {
   else words = 'at the right end';
   return { fromLeft, share, words };
 }
+function wayOf(r) { const p = r.pos; return `${p.left ? 'Left' : 'Right'} side, ${ORD(p.j + 1)} case from the door`; }
 function directionsOf(r) {
   const p = r.pos;
   return `Walk in, ${p.left ? 'left' : 'right'} side, ${ORD(p.j + 1)} case (Case ${p.caseId}), ${levelWords(r.level)}, ${alongOf(r).words}.`;
@@ -705,14 +727,12 @@ function planFor(r) {
     { p0: aisle, p1: endP, q0: endT, q1: endT, ms: 1100, e: easeOut },         // move in to the level
   ];
 }
-function showBox(html, cls) { walkBox.innerHTML = html; walkBox.hidden = false; stage.classList.add('walking'); }
+function showBox(html, cls) { walkBox.innerHTML = html; walkBox.className = 'walkbox' + (cls ? ' ' + cls : ''); walkBox.hidden = false; stage.classList.add('walking'); }
 function hideBox() { walkBox.hidden = true; walkBox.innerHTML = ''; stage.classList.remove('walking'); }
 function bookOf(r) { return BOOKS[r.b] || { t: r.b, a: '', k: 0 }; }
 function walkingHTML(r) {
-  return `<p class="wk-k">Walking to Case ${esc(r.pos.caseId)} · Level ${r.level}</p>
-    <p class="wk-t" dir="auto">${esc(bookOf(r).t)}</p>
-    <p class="wk-d">${esc(directionsOf(r))}</p>
-    <div class="wk-b"><button type="button" class="pri" data-w="skip">Skip</button><button type="button" data-w="exit">Exit</button></div>`;
+  return `<div class="wk-m"><p class="wk-k">Walking to ${esc(r.pos.caseId)}${r.level}</p><p class="wk-t" dir="auto">${esc(bookOf(r).t)}</p></div>
+    <div class="wk-b"><button type="button" class="pri" data-w="skip">Skip</button><button type="button" data-w="exit" aria-label="Exit">✕</button></div>`;
 }
 function arrivedHTML(r, stopped) {
   const bk = bookOf(r), al = alongOf(r);
@@ -720,7 +740,7 @@ function arrivedHTML(r, stopped) {
   return `<p class="wk-k">${stopped ? 'Walk stopped · you’re in control' : 'Here it is'}</p>
     <p class="wk-t" dir="auto">${esc(bk.t)}</p>${bk.a ? `<p class="wk-a" dir="auto">${esc(bk.a)}</p>` : ''}
     <div class="loc"><div><span>Case</span><b>${esc(r.pos.caseId)}</b></div><div><span>Level</span><b>${r.level}<small>${levelShort(r.level)}</small></b></div><div><span>Along</span><b style="font-size:.9rem">${esc(along)}</b></div></div>
-    <p class="wk-d">${esc(directionsOf(r))}${r.n > 1 ? ` ${r.n} volumes here.` : ''}</p>
+    <p class="wk-d">${esc(wayOf(r))}${r.n > 1 ? ` · ${r.n} volumes` : ''}</p>
     <div class="wk-b">${stopped ? '<button type="button" class="pri" data-w="skip">Go to the book</button>' : ''}<button type="button"${stopped ? '' : ' class="pri"'} data-w="replay">Replay</button><button type="button" data-w="exit">Exit</button></div>`;
 }
 function messageHTML(title, text) {
@@ -737,7 +757,7 @@ function startWalk(ri) {
   if (reduceMotion()) { finishWalk(false); return; }
   camera.position.copy(walkPlan[0].p0); controls.target.copy(walkPlan[0].q0); controls.update();
   walk = { i: 0, t0: performance.now() };
-  showBox(walkingHTML(r));
+  showBox(walkingHTML(r), 'slim');
 }
 function finishWalk(stopped) {
   const r = runs[walkRun]; if (!r) return;
@@ -802,7 +822,8 @@ function walkFromHash() {
   }
   if (hits.length === 1) { startWalk(hits[0].ri); return; }
   const bk = bookOf(hits[0]);
-  showBox(`<p class="wk-k">On ${hits.length} shelves · choose one</p><p class="wk-t" dir="auto">${esc(bk.t)}</p>
+  const nSh = new Set(hits.map(r => r.s.id)).size;
+  showBox(`<p class="wk-k">${nSh > 1 ? `On ${nSh} shelves` : `In ${hits.length} places on ${esc(hits[0].pos.caseId)}${hits[0].level}`} · choose one</p><p class="wk-t" dir="auto">${esc(bk.t)}</p>
     <div class="wk-list">${hits.map(r => `<div class="wk-place"><p><b>Case ${esc(r.pos.caseId)} · Level ${r.level}</b> · ${r.n} vol${r.n > 1 ? 's' : ''}<br>${esc(directionsOf(r))}</p><button type="button" class="wk-go" data-w="go" data-run="${r.ri}">Walk me there</button></div>`).join('')}</div>
     <div class="wk-b"><button type="button" data-w="exit">Exit</button></div>`);
 }

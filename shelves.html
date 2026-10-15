@@ -64,6 +64,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
   --frame: #3a2c21; --plank: #6b5039; --cavity: #1b1713; --warn: #e0a347; --bad: #f2786b; --bad-soft: #3a1c19; --mark: #5a4a17;
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%); color-scheme: dark; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { background: var(--bg); color: var(--ink); }
 body { font-family: var(--f-ui); font-size: 15px; line-height: 1.5; margin: 0; }
 .wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; }
@@ -140,6 +141,8 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .spine .sv { position: absolute; bottom: 2px; inset-inline: 0; text-align: center; font-size: 9px; color: #fff; opacity: .85; font-variant-numeric: tabular-nums; }
 @container (max-width: 11px) { .spine .st, .spine .sv { display: none; } }
 .spine:nth-child(even) { filter: brightness(1.18) saturate(.9); }
+/* each volume of a set: a thin divider and a rounded-spine shade */
+.spine:not(.photo) { background-image: linear-gradient(90deg, rgb(0 0 0 / 22%) 0 1px, rgb(255 255 255 / 10%) 1px 18%, transparent 30% 70%, rgb(0 0 0 / 16%)); background-size: calc(100% / var(--n)) 100%; }
 .cavity.photos { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .cavity .spine.photo, .cavity.titled .spine.photo { flex: 0 0 auto; background-size: 100% 100%; background-repeat: no-repeat; background-color: #2a221b; border-radius: 1px 1px 0 0; box-shadow: inset -1px 0 0 rgb(0 0 0 / 30%); }
 .cavity .spine.photo:nth-child(even) { filter: none; }
@@ -542,17 +545,17 @@ details.settings summary { cursor: pointer; color: var(--muted); }
 
   // ---------- rendering ----------
   function renderStats() {
-    let placed = 0, levels = 0;
-    for (const s of shelves.values()) { if (s.id !== 'tray') { placed += used(s); levels++; } }
+    let placed = 0;
+    for (const s of shelves.values()) if (s.id !== 'tray') placed += used(s);
     const tray = used(shelves.get('tray'));
     const pill = mode === 'live' ? '<span class="pill live"><i></i>Live · changes save for everyone</span>'
       : mode === 'readonly-live' ? '<span class="pill ro"><i></i>Live · view only</span>'
       : '<span class="pill ro"><i></i>Saved copy · 14 Oct 2026</span>';
-    $('#stats').innerHTML = `<span><b>${cfg.cases.length}</b> cases</span><span><b>${levels}</b> levels</span><span><b>${fmt(placed)}</b> volumes shelved</span>${tray ? `<span><b>${tray}</b> in tray</span>` : ''}${pill}`;
+    $('#stats').innerHTML = `<span><b>${cfg.cases.length}</b> cases</span><span><b>${fmt(placed)}</b> volumes shelved</span>${tray ? `<span>${fmt(tray)} not yet shelved</span>` : ''}${pill}`;
   }
   function renderBanner() {
     let msg = '';
-    if (mode === 'start' && !db) msg = 'This is the layout of the shelves as saved on 14 Oct 2026, for finding books. Books are moved in the Shelf Map in Claude, and this app gets the new layout at its next update.';
+    if (mode === 'start' && !db) msg = 'Shelves as saved on 14 Oct 2026. Books moved after that show here at the next app update.';
     else if (mode === 'start' && db) msg = 'The shared shelves have not been set up yet, so this is the starting layout and changes will not be saved.';
     else if (mode === 'readonly-live') msg = 'You can look but not move books. Ask the owner for edit access to make changes.';
     $('#banner').innerHTML = msg ? `<div class="banner">${esc(msg)}</div>` : '';
@@ -601,7 +604,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
       const hit = ui.hit && ui.hit === it.b ? ' hit' : '';
       const h2 = ui.titles ? 84 + ((it.b.length * 7 + it.n * 3) % 17) : h;
       const txt = ui.titles ? `<span class="st">${esc(b ? b.t : it.b)}</span>${it.n > 1 ? `<span class="sv">${it.n}</span>` : ''}` : '';
-      return `<span class="spine${hit}" style="--n:${it.n};height:${h2}%;background:${genreColor(k)}" ${at} aria-label="${esc(tip(b) || it.b)}">${txt}</span>`;
+      return `<span class="spine${hit}" style="--n:${it.n};height:${h2}%;background-color:${genreColor(k)}" ${at} aria-label="${esc(tip(b) || it.b)}">${txt}</span>`;
     }).join('');
   }
   function renderCase() {
