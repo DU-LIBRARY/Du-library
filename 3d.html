@@ -207,17 +207,18 @@ const GC = ['#2f6b4f', '#4d8a62', '#7aa36b', '#2c5a8a', '#3f74a8', '#5f8fbf', '#
 const genreColor = k => GC[k % GC.length];
 
 // ---------- room dimensions (metres) ----------
-const PER_SIDE = 16, LEVELS = 6, CAP = 75;
+const PER_SIDE = 7, LEVELS = 6, CAP = 75;
 const W = 1.15, H = 2.15, DEP = 0.32, SIDE_T = 0.025, PLINTH = 0.08, PLANK = 0.02, TOP_T = 0.04;
 const PITCH_Y = (H - PLINTH - TOP_T) / LEVELS;
 const GAP = 0.02, PITCH_Z = W + GAP, START_Z = 1.0;
 const ROOM_W = 4.0, ROOM_L = START_Z + PER_SIDE * PITCH_Z + 1.2, WALL_H = 2.9;
 const IW = W - 2 * SIDE_T, TB = IW / CAP;
 
-// Case letters fill positions in order: left wall from the door, then the right wall from the door.
+// Case letters fill positions in order: down the left wall from the door, then back up the right wall,
+// so the first right-hand case stands at the far end, opposite the last left-hand one. j counts from the door.
 const POS = [];
 for (let i = 0; i < PER_SIDE * 2; i++) {
-  const left = i < PER_SIDE, j = i % PER_SIDE;
+  const left = i < PER_SIDE, j = left ? i : PER_SIDE * 2 - 1 - i;
   const z = -(START_Z + j * PITCH_Z + W / 2);
   POS.push({ i, left, j, z, x: left ? -ROOM_W / 2 + DEP / 2 : ROOM_W / 2 - DEP / 2, rot: left ? Math.PI / 2 : -Math.PI / 2, caseId: D.cases[i] || null });
 }
