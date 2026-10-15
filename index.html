@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="DU Library">
 <title>Darul Uloom Library</title>
+<meta name="du-walk" content="3d.html">
 <style>
 @font-face { font-family: "Amiri"; font-weight: 400; font-display: swap; src: url(fonts/amiri-400.woff) format("woff"); }
 @font-face { font-family: "Amiri"; font-weight: 700; font-display: swap; src: url(fonts/amiri-700.woff) format("woff"); }
@@ -169,6 +170,10 @@ footer { color: var(--faint); font-size: 0.78rem; padding-block: 10px 30px; bord
   .shelf .sar { font-size: 1.12rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Walk me there: opens the 3D Library and walks to the book */
+.walk { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 14px; margin-top: 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: .82rem; text-decoration: none; }
+.walk:hover { background: var(--accent); color: var(--accent-ink); }
+.walk svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 
 <div class="wrap">
@@ -466,6 +471,8 @@ footer { color: var(--faint); font-size: 0.78rem; padding-block: 10px 30px; bord
     return `<span class="spines" aria-hidden="true">${h}</span>`;
   }
 
+  // Walk me there: a link into the 3D Library (in the app it is 3d.html; here it is the 3D Library page in Claude)
+  const WALK = document.querySelector('meta[name="du-walk"]')?.content || '3d.html';
   function entryHTML(b, tokens) {
     const ar = isAr(b.t);
     const dir = ar ? 'rtl' : 'ltr';
@@ -486,6 +493,7 @@ footer { color: var(--faint); font-size: 0.78rem; padding-block: 10px 30px; bord
     if (b.l === 'en') chips.push(`<span class="chip"><bdi>English</bdi></span>`);
     if (b.l === 'ur') chips.push(`<span class="chip"><bdi>Urdu</bdi></span>`);
     parts.push(`<div class="meta">${chips.join('')}</div>`);
+    if (b.s && b.s.length) parts.push(`<a class="walk" href="${esc(WALK + '#book=' + b.s.map(encodeURIComponent).join(','))}"${/^https?:/.test(WALK) ? ' target="_blank" rel="noopener"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="m7 21 3-7 3 3v5M10 14l1-6 4 3 3 1M8 9l3-1"/></svg>Walk me there</a>`);
     if (b.n && b.n.length) parts.push(`<div class="notes" dir="auto">${b.n.map(esc).join(' · ')}</div>`);
     const src = (b.s || []).map(s => { const [sh, row] = s.split('!'); return sh === 'extra' ? 'Added from a shelf photo (not in the spreadsheet)' : `${esc(sh)}, row ${row}`; }).join('; ');
     parts.push(`<details class="more"><summary>${b.d ? 'Description and spreadsheet row' : 'Spreadsheet row'}</summary>${b.d ? `<p dir="auto">${esc(b.d)}</p>` : ''}<div class="src" dir="ltr">Sheet: <bdi>${src}</bdi></div></details>`);
