@@ -166,6 +166,11 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .walkbox.slim .wk-m { min-width: 0; }
 .walkbox.slim .wk-b { flex-wrap: nowrap; }
 .walkbox.slim .wk-b button { min-width: 44px; padding-inline: 14px; }
+.walkbox.arrived { gap: 8px; padding: 10px 12px; }
+.walkbox.arrived .wk-m { display: grid; gap: 2px; min-width: 0; }
+.walkbox.arrived .wk-t { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.walkbox.arrived .wk-d { font-size: 0.8rem; color: var(--muted); }
+.walkbox.arrived .wk-b button { min-height: 38px; min-width: 0; padding: 6px 16px; font-size: 0.85rem; }
 .stage.walking .hint, .stage.walking .compass { display: none; }
 .walkbox .wk-k { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 0; }
 .walkbox .wk-t { font-family: var(--f-title); font-weight: 700; font-size: 1.2rem; line-height: 1.35; margin: 0; overflow-wrap: anywhere; }
@@ -784,9 +789,11 @@ function aboutHTML(bk, r, notes) {
 }
 function arrivedHTML(r, stopped) {
   const bk = bookOf(r);
-  return `<p class="wk-k">${stopped ? 'Walk stopped · you’re in control' : 'Here it is'}</p>
-    <p class="wk-t" dir="auto">${esc(bk.t)}</p>${bk.a ? `<p class="wk-a" dir="auto">${esc(bk.a)}</p>` : ''}
-    ${whereHTML(r)}<p class="wk-d">${esc(wayOf(r))}</p>${aboutHTML(bk, r)}
+  // compact: the full details are in the Selected book card under the room
+  const at = `Case ${r.pos.caseId} · Level ${r.level} (${levelShort(r.level)})`;
+  return `<div class="wk-m"><p class="wk-k">${stopped ? 'Walk stopped' : 'Here it is'} · ${esc(at)}</p>
+    <p class="wk-t" dir="auto">${esc(bk.t)}</p>
+    <p class="wk-d">${esc(alongShort(r).replace(/^./, c => c.toUpperCase()))} · ${esc(wayOf(r).replace(/^L|^R/, c => c.toLowerCase()))}</p></div>
     <div class="wk-b">${stopped ? '<button type="button" class="pri" data-w="skip">Go to the book</button>' : ''}<button type="button"${stopped ? '' : ' class="pri"'} data-w="replay">Replay</button><button type="button" data-w="exit">Exit</button></div>`;
 }
 function messageHTML(title, text) {
@@ -810,7 +817,7 @@ function finishWalk(stopped) {
   walk = null;
   if (!stopped) { const last = walkPlan[walkPlan.length - 1]; camera.position.copy(last.p1); controls.target.copy(last.q1); controls.update(); }
   if (!stopped && !reduceMotion()) pulse = { ri: walkRun, t0: performance.now() };
-  showBox(arrivedHTML(r, stopped));
+  showBox(arrivedHTML(r, stopped), 'arrived');
 }
 function stepWalk() {
   const now = performance.now(), s = walkPlan[walk.i];
