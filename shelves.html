@@ -185,6 +185,10 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 /* Walk me there: opens the 3D Library and walks to the book */
 .walk { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: .82rem; text-decoration: none; justify-self: start; margin-top: 4px; }
 .walk:hover { background: var(--accent); color: var(--accent-ink); }
+.it .chips { align-items: center; }
+.it .chips .walk { min-height: 26px; padding: 1px 10px 1px 8px; margin: 0 0 0 2px; font-size: .74rem; gap: 4px; background: transparent; box-shadow: inset 0 0 0 1px var(--accent); }
+.it .chips .walk:hover { background: var(--accent); color: var(--accent-ink); }
+.it .chips .walk svg { width: 14px; height: 14px; }
 .walk svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .bookcard .walk { display: flex; width: 100%; margin-top: 11px; min-height: 40px; background: var(--accent); color: var(--accent-ink); }
 .spine.hit { outline: 2px solid var(--gilt); outline-offset: 1px; animation: pulse 1.2s ease-in-out 3; z-index: 1; }
@@ -280,9 +284,9 @@ details.settings summary { cursor: pointer; color: var(--muted); }
   <div id="main"></div>
   <details class="settings" id="settings"><summary>Shelf settings</summary>
     <div class="grid">
-      <label>Volumes per level <input type="number" id="cap" min="10" max="120"></label>
-      <label>Most a level can take <input type="number" id="max" min="10" max="150"></label>
-      <label>Levels per bookcase <input type="number" id="lvls" min="1" max="10"></label>
+      <label class="w-only">Volumes per level <input type="number" id="cap" min="10" max="120"></label>
+      <label class="w-only">Most a level can take <input type="number" id="max" min="10" max="150"></label>
+      <label class="w-only">Levels per bookcase <input type="number" id="lvls" min="1" max="10"></label>
       <label><input type="checkbox" id="rtl"> Books run right to left on the drawing</label>
     </div>
     <p class="note" style="padding:0 0 12px">Death years (AH) were added by Claude only to put books in rough chronological order; check any you rely on. Undated authors, mostly contemporary, sit at the end of each genre.</p>
@@ -636,7 +640,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
   }
   function renderPanel() {
     const s = shelves.get(ui.shelfId);
-    if (!s) return `<div class="panel"><div class="empty-panel">Tap a shelf to see the books on it, put them in order, or move them.</div></div>`;
+    if (!s) return `<div class="panel"><div class="empty-panel">${canWrite ? 'Tap a shelf to see the books on it, put them in order, or move them.' : 'Tap a shelf to see the books on it, in order, and walk to any of them.'}</div></div>`;
     const u = used(s);
     const g = genreSummary(s);
     const items = s.items.map((it, i) => {
@@ -647,7 +651,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
         ${canWrite ? `<input type="checkbox" data-sel="${i}" ${ui.sel.has(i) ? 'checked' : ''} aria-label="Select">` : '<span></span>'}
         <span class="num">${i + 1}</span>
         <span class="body"><span class="t" dir="auto">${esc(b.t)}</span>${b.a ? `<span class="a" dir="auto">${esc(b.a)}</span>` : ''}<span class="pr"><b>Print</b><span dir="auto">${esc(b.p || 'not recorded')}</span></span>
-          <span class="chips"><span class="chip g" style="background:${genreColor(b.k)}">${esc(CATS[b.k].en)}</span><span class="chip v">${vol}${cp}</span>${b.y ? `<span class="chip y">d. ${b.y} AH</span>` : ''}</span>${walkLink(it.b, s.id)}</span>
+          <span class="chips"><span class="chip g" style="background:${genreColor(b.k)}">${esc(CATS[b.k].en)}</span><span class="chip v">${vol}${cp}</span>${b.y ? `<span class="chip y">d. ${b.y} AH</span>` : ''}${walkLink(it.b, s.id)}</span></span>
         ${canWrite ? `<span class="ord"><button data-up="${i}" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>▲</button><button data-down="${i}" aria-label="Move down" ${i === s.items.length - 1 ? 'disabled' : ''}>▼</button></span>` : '<span></span>'}
       </li>`;
     }).join('');
@@ -660,8 +664,8 @@ details.settings summary { cursor: pointer; color: var(--muted); }
         ${s.id !== 'tray' ? `<div class="meter ${fillClass(u)}"><b style="width:${Math.min(100, u / cfg.max * 100)}%"></b></div>
         ${s.items.some(photoOf) ? '<span class="photonote">Spines shown from photos of this shelf (Oct 2026). A photo stays with its set if the set is moved whole.</span>' : ''}
         <div class="row"><span class="auto">${u} of ${cfg.capacity} volumes${u > cfg.max ? ' · over the limit' : ''}</span><span class="auto">${g.map(([k, v]) => `<span class="ar">${esc(CATS[k].ar)}</span> ${v}`).join(' · ')}</span></div>
-        <div><label for="shelflabel">Shelf label</label>
-        <input class="label" id="shelflabel" dir="auto" value="${esc(s.label)}" placeholder="${esc(autoLabel(s) || 'e.g. شروح البخاري')}" ${canWrite ? '' : 'disabled'}></div>` : '<span class="auto">Books taken off a shelf wait here until you put them somewhere.</span>'}
+        ${canWrite ? `<div><label for="shelflabel">Shelf label</label>
+        <input class="label" id="shelflabel" dir="auto" value="${esc(s.label)}" placeholder="${esc(autoLabel(s) || 'e.g. شروح البخاري')}"></div>` : ''}` : '<span class="auto">Books taken off a shelf wait here until you put them somewhere.</span>'}
       </div>
       ${s.items.length ? `<ol class="items">${items}</ol>` : '<div class="empty-panel">No books here.</div>'}
       ${canWrite && s.items.length ? `<div class="actions">
@@ -699,7 +703,9 @@ details.settings summary { cursor: pointer; color: var(--muted); }
       .map(k => `<span><i class="dot" style="background:${genreColor(k)}"></i>${esc(CATS[k].en)}</span>`).join('');
     $('#main').innerHTML = `<div class="work"><div>${renderCase()}<div class="legend">${legend}</div></div>${renderPanel()}</div>`;
     $('#cap').value = cfg.capacity; $('#max').value = cfg.max; $('#lvls').value = cfg.levels; $('#rtl').checked = ui.rtl;
-    $('#cap').disabled = $('#max').disabled = !canWrite;
+    $('#cap').disabled = $('#max').disabled = $('#lvls').disabled = !canWrite;
+    for (const el of document.querySelectorAll('#settings .w-only')) el.hidden = !canWrite;
+    $('#settings summary').textContent = canWrite ? 'Shelf settings' : 'Display settings';
   }
   function ago(t) {
     const m = Math.round((Date.now() - t) / 60000);

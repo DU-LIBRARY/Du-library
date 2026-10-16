@@ -892,7 +892,10 @@ window.__walk = { runs: () => runs.map(r => ({ b: r.b, shelf: r.s.id, idx: r.idx
 // ---------- loop ----------
 function resize() {
   const w = stage.clientWidth, h = stage.clientHeight;
-  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  // portrait phones: keep at least ~50° across, so the entrance shows more than the far end of the aisle
+  camera.fov = camera.aspect < 0.9 ? Math.min(80, 2 * THREE.MathUtils.radToDeg(Math.atan(Math.tan(THREE.MathUtils.degToRad(25)) / camera.aspect))) : 55;
+  camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(stage); resize();
 { const [p, t] = viewFor('door'); camera.position.copy(p); controls.target.copy(t); controls.update(); }
