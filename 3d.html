@@ -108,6 +108,7 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .levels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-block: 6px 0; font-size: 0.82rem; color: var(--muted); }
 .levels button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
 .levels button:hover { border-color: var(--accent); }
+@media (max-width: 600px) { .levels > span { flex-basis: 100%; } .levels button { flex: 1; padding-inline: 0; } }
 .levels button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .ct .tt { font-size: 0.66rem; color: var(--gilt); font-weight: 600; }
 .ct.wall { background: transparent; border-style: dashed; color: var(--muted); cursor: default; font-size: 0.66rem; place-content: center; }
@@ -139,6 +140,10 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend .ar { font-family: var(--f-ar); }
 .legendbox summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; padding: 0 14px 14px; min-height: 32px; }
+.legendbox summary { list-style: none; display: flex; align-items: center; gap: 6px; }
+.legendbox summary::-webkit-details-marker { display: none; }
+.legendbox summary::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .15s; flex: none; }
+details[open] > .legendbox summary::after { transform: translateY(1px) rotate(-135deg); }
 .legendbox[open] summary { padding-bottom: 8px; }
 .notes { color: var(--muted); font-size: 0.82rem; margin: 0; max-width: 70ch; }
 @media (max-width: 520px) {

@@ -238,6 +238,10 @@ td.code { font-weight: 700; font-variant-numeric: tabular-nums; white-space: now
 td .ar { display: block; }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 tr.clickable { cursor: pointer; } tr.clickable:hover td { background: var(--accent-soft); }
+.tbl th:nth-child(2), .tbl th:nth-child(4), .tbl th:nth-child(5) { text-align: right; }
+.tbl .narrow { display: none; }
+td .to { display: none; color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
+@media (max-width: 600px) { .tbl th:nth-child(5), .tbl td:nth-child(5) { display: none; } td .to { display: block; } .tbl .narrow { display: inline; } .tbl .wide { display: none; } th, td { padding: 8px 8px; } }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 2px 0; font-size: 0.78rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .banner { margin-top: 10px; padding: 10px 14px; border-radius: var(--r); background: var(--gilt-soft); color: var(--ink); font-size: 0.88rem; }
@@ -558,7 +562,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
   }
   function renderBanner() {
     let msg = '';
-    if (mode === 'start' && !db) msg = 'Shelves as saved on 14 Oct 2026. Books moved after that show here at the next app update.';
+    if (mode === 'start' && !db) msg = '';
     else if (mode === 'start' && db) msg = 'The shared shelves have not been set up yet, so this is the starting layout and changes will not be saved.';
     else if (mode === 'readonly-live') msg = 'You can look but not move books. Ask the owner for edit access to make changes.';
     $('#banner').innerHTML = msg ? `<div class="banner">${esc(msg)}</div>` : '';
@@ -681,10 +685,10 @@ details.settings summary { cursor: pointer; color: var(--muted); }
     for (const c of cfg.cases) for (const s of shelvesOf(c.id)) {
       const u = used(s); const first = BY.get(s.items[0]?.b); const last = BY.get(s.items[s.items.length - 1]?.b);
       rows.push(`<tr class="clickable" data-go="${esc(s.id)}"><td class="code">${esc(c.id)}${s.level}</td><td><span class="ar" dir="auto">${esc(s.label || autoLabel(s))}</span></td>
-        <td class="num ${fillClass(u)}">${u}</td><td>${first ? `<span class="ar" dir="auto">${esc(first.t)}</span>` : '—'}</td><td>${last && last !== first ? `<span class="ar" dir="auto">${esc(last.t)}</span>` : ''}</td></tr>`);
+        <td class="num ${fillClass(u)}">${u}</td><td>${first ? `<span class="ar" dir="auto">${esc(first.t)}</span>${last && last !== first ? `<span class="ar to" dir="auto">… ${esc(last.t)}</span>` : ''}` : '—'}</td><td>${last && last !== first ? `<span class="ar" dir="auto">${esc(last.t)}</span>` : ''}</td></tr>`);
     }
     const legend = [...new Set(BOOKS.map(b => b.k))].sort((a, b) => a - b).map(k => `<span><i class="dot" style="background:${genreColor(k)}"></i>${esc(CATS[k].en)}</span>`).join('');
-    return `<div class="list"><div class="tbl"><table><thead><tr><th>Shelf</th><th>Label</th><th>Vols</th><th>First book</th><th>Last book</th></tr></thead><tbody>${rows.join('')}</tbody></table></div><div class="legend">${legend}</div></div>`;
+    return `<div class="list"><div class="tbl"><table><thead><tr><th>Shelf</th><th>Label</th><th>Vols</th><th><span class="wide">First book</span><span class="narrow">First … last book</span></th><th>Last book</th></tr></thead><tbody>${rows.join('')}</tbody></table></div><div class="legend">${legend}</div></div>`;
   }
   function render() {
     { const bc = document.getElementById('bookcard'); if (bc && bc.classList.contains('on') && !bc.classList.contains('touch')) hideCard(true); }

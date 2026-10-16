@@ -151,6 +151,10 @@ ol.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .notes { color: var(--muted); font-size: 0.84rem; font-style: italic; overflow-wrap: anywhere; }
 details.more { font-size: 0.82rem; color: var(--muted); }
 details.more summary { cursor: pointer; color: var(--faint); width: fit-content; }
+details.more summary { list-style: none; display: flex; align-items: center; gap: 6px; }
+details.more summary::-webkit-details-marker { display: none; }
+details.more summary::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .15s; flex: none; }
+details[open] > details.more summary::after { transform: translateY(1px) rotate(-135deg); }
 details.more p { white-space: pre-line; margin: 6px 0; max-width: 70ch; color: var(--ink); line-height: 1.6; }
 details.more .src { font-variant-numeric: tabular-nums; }
 mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
@@ -576,14 +580,14 @@ footer { color: var(--faint); font-size: 0.78rem; padding-block: 10px 30px; bord
       main.innerHTML = `<div class="sectionhead"><h2>${label}</h2></div><div class="empty"><strong>No books found.</strong><br>Try a shorter search (one distinctive word of the title or the author's best-known name), switch the search to “All”, or clear the filters.</div>`;
       return;
     }
-    let html = `<div class="sectionhead"><h2>${label}</h2><span class="count">${exact.length ? `${fmt(exact.length)} ${exact.length === 1 ? 'book' : 'books'}${close.length ? ` + ${close.length} close` : ''}` : `${close.length} close ${close.length === 1 ? 'match' : 'matches'}`}</span></div>`;
+    let html = `<div class="sectionhead"><h2>${label}</h2><span class="count">${exact.length ? `${fmt(exact.length)} ${exact.length === 1 ? 'book' : 'books'}${close.length ? ` · ${close.length} close ${close.length === 1 ? 'match' : 'matches'}` : ''}` : `${close.length} close ${close.length === 1 ? 'match' : 'matches'}`}</span></div>`;
     let budget = state.limit;
     if (exact.length) {
       html += `<ol class="results">${exact.slice(0, budget).map(b => entryHTML(b, tokens)).join('')}</ol>`;
       budget -= Math.min(exact.length, budget);
     }
     if (close.length && budget > 0) {
-      html += `<div class="divider"><h2>${exact.length ? 'Close matches' : 'Close matches'}</h2><p>${exact.length ? 'Similar spellings or English transliterations of what you typed.' : 'Nothing matched exactly, so these are the nearest spellings and transliterations.'}</p></div>`;
+      html += `<div class="divider"><h2>Close matches</h2><p>${exact.length ? 'Similar spellings or English transliterations of what you typed.' : 'Nothing matched exactly, so these are the nearest spellings and transliterations.'}</p></div>`;
       html += `<ol class="results">${close.slice(0, budget).map(b => entryHTML(b, tokens)).join('')}</ol>`;
     }
     if (total > state.limit) html += `<button class="morebtn" id="more">Show more (${fmt(total - state.limit)} left)</button>`;
