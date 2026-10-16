@@ -909,8 +909,25 @@ details.settings summary { cursor: pointer; color: var(--muted); }
     box.hidden = false;
   }
 
+  // A link like shelves.html#book=<id>[&shelf=B-1] (from Search) opens the book's case and lights it up
+  function showFromHash() {
+    const prm = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const bid = prm.get('book'); if (!bid) return false;
+    const loc = locate(bid); if (!loc.length) return false;
+    const s = (loc.find(l => l.s.id === prm.get('shelf')) || loc[0]).s;
+    ui.view = 'case'; ui.caseId = s.id === 'tray' ? 'tray' : s.case; ui.shelfId = s.id; ui.hit = bid; ui.sel.clear(); render();
+    requestAnimationFrame(() => {
+      const sp = document.querySelector('.spine.hit');
+      sp?.closest('.level')?.scrollIntoView({ block: 'center' }); sp?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    });
+    return true;
+  }
+  window.addEventListener('hashchange', showFromHash);
+
   // ---------- live data ----------
   render();
+  showFromHash();
+  let liveHash = false;   // look again once the live shelves arrive: the book may have moved since the saved layout
   (async () => {
     db = await window.claude?.use?.('db');
     if (!db) { render(); return; }
@@ -935,6 +952,7 @@ details.settings summary { cursor: pointer; color: var(--muted); }
       mode = can === false ? 'readonly-live' : 'live';
       canWrite = mode === 'live';
       first = false;
+      if (!liveHash) { liveHash = true; showFromHash(); }
       const ids = [...new Set([...shelves.values()].map(s => s.updatedBy).filter(Boolean))].filter(id => !names.has(id));
       if (ids.length && user) user.profiles(ids).then(ps => { for (const id of ids) names.set(id, ps[id]?.name || ''); render(); }).catch(() => {});
       render();
