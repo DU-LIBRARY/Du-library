@@ -143,7 +143,7 @@ header.top { padding-block: 20px 12px; display: flex; flex-wrap: wrap; gap: 6px 
 .legendbox summary { list-style: none; display: flex; align-items: center; gap: 6px; }
 .legendbox summary::-webkit-details-marker { display: none; }
 .legendbox summary::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .15s; flex: none; }
-details[open] > .legendbox summary::after { transform: translateY(1px) rotate(-135deg); }
+.legendbox[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
 .legendbox[open] summary { padding-bottom: 8px; }
 .notes { color: var(--muted); font-size: 0.82rem; margin: 0; max-width: 70ch; }
 @media (max-width: 520px) {

@@ -154,7 +154,7 @@ details.more summary { cursor: pointer; color: var(--faint); width: fit-content;
 details.more summary { list-style: none; display: flex; align-items: center; gap: 6px; }
 details.more summary::-webkit-details-marker { display: none; }
 details.more summary::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .15s; flex: none; }
-details[open] > details.more summary::after { transform: translateY(1px) rotate(-135deg); }
+details.more[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
 details.more p { white-space: pre-line; margin: 6px 0; max-width: 70ch; color: var(--ink); line-height: 1.6; }
 details.more .src { font-variant-numeric: tabular-nums; }
 mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
