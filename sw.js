@@ -2,7 +2,7 @@
 // so they open with no signal. Fonts and the 3D engine are part of the app, so nothing comes
 // from outside. build.py stamps VERSION on every update, so phones fetch the new pages on
 // their next visit online; fonts and the 3D engine never change and are carried over.
-const VERSION = '202610162046';
+const VERSION = '202610172122';
 const CACHE = 'du-library-' + VERSION;
 const PAGES = ['./index.html', './shelves.html', './3d.html'];
 const OTHER = ['./manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
