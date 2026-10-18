@@ -377,7 +377,7 @@ const used = s => s.items.reduce((n, [, c]) => n + c, 0);
 const vols = shelves.reduce((n, s) => n + used(s), 0);
 const trayN = tray ? used(tray) : 0;
 $('#stats').innerHTML = `<span><b>${D.cases.length}</b> cases</span><span><b>${vols.toLocaleString('en-GB')}</b> volumes shelved</span>${trayN ? `<span>${trayN.toLocaleString('en-GB')} not yet shelved</span>` : ''}<span class="pill"><i></i>Saved copy · ${esc(D.snap)}</span>`;
-$('#notes').textContent = `Shelves as saved on ${D.snap}. Level 1 is the top shelf and books run right to left, as in the Shelf Map. Cases A to F have titles on their spines, checked against photos; the rest are coloured by subject. Case sizes and the aisle width are estimates.`;
+$('#notes').textContent = `Shelves as saved on ${D.snap}. Level 1 is the top shelf and books run right to left, as in the Shelf Map. Cases A to F, O and P have titles on their spines, checked against photos; the rest are coloured by subject. Case sizes and the aisle width are estimates.`;
 
 // ---------- theme ----------
 function tok(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
@@ -545,7 +545,7 @@ $('#loading').hidden = true;
 // ---------- drawn spines with titles (cases listed in TITLED) ----------
 // Sets of BIG_SET volumes or more carry one title running across all their spines, like a real multi-volume set.
 // Smaller sets have the title written down each spine.
-const TITLED = new Set(['A', 'B', 'C', 'D', 'E', 'F']);
+const TITLED = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'O', 'P']);
 const BIG_SET = 4;
 // Spines are drawn at half size: a spine is a few dozen pixels wide on screen, and full size took ~900 MB,
 // which made iPhone Safari close the page. Each drawing is freed once it is on the graphics card.
