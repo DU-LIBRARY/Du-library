@@ -36,7 +36,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--rule, var(--line, #e6dbc4)); }
 .apptabs::before { content: ''; position: absolute; inset-inline: 0; top: 2px; height: 1px; background: color-mix(in srgb, var(--rule, #d6bc84) 50%, transparent); pointer-events: none; }
 .apptabs a { position: relative; flex: 0 1 150px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 6px; border-radius: 12px;
-  text-decoration: none; color: var(--muted, #6a5845); font: 500 0.72rem/1.2 "IBM Plex Sans", system-ui, -apple-system, sans-serif; letter-spacing: .01em; }
+  text-decoration: none; color: var(--muted, #6a5845); font: 500 0.78rem/1.2 "IBM Plex Sans", system-ui, -apple-system, sans-serif; letter-spacing: .01em; }
 .apptabs a svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .apptabs a:hover { color: var(--accent, #0b5a42); }
 .apptabs a[aria-current="page"] { color: var(--accent, #0b5a42); font-weight: 600; background: var(--accent-soft, #e3ece1);
@@ -44,7 +44,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
 .apptabs a[aria-current="page"] svg { stroke-width: 1.9; }
 .apptabs a:focus-visible { outline: 2px solid var(--accent, #0b5a42); outline-offset: 1px; }
 .offline-note { display: block; margin-top: 6px; }
-.offline-note i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--faint, #7a6850); margin-right: 6px; vertical-align: 1px; }
+.offline-note i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--faint, #725f48); margin-right: 6px; vertical-align: 1px; }
 .offline-note.ok i { background: var(--accent, #0b5a42); }
 .actions { bottom: 0; } .toast { bottom: calc(var(--tabh) + 16px + env(safe-area-inset-bottom, 0px)) !important; }
 </style>
@@ -54,9 +54,10 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
 /* Layout: a strip of bookcases (the room), the chosen case drawn as five shelves, and a shelf panel for moving books.
    Look: "manuscript & gold", as the catalogue: warm paper, ink-brown text, emerald to press, gold leaf for ornament; the case is walnut with a gold inlay. */
 :root {
-  --bg: #f6f0e3; --surface: #fffcf5; --ink: #2a1e14; --muted: #6a5845; --faint: #7a6850; --line: #e6dbc4; --rule: #d6bc84; --gold: #b48a3a;
+  --bg: #f6f0e3; --surface: #fffcf5; --ink: #2a1e14; --muted: #6a5845; --faint: #725f48; --line: #e6dbc4; --rule: #d6bc84; --gold: #b48a3a;
   --accent: #0b5a42; --accent-soft: #e3ece1; --accent-ink: #fffcf5; --gilt: #855c10; --gilt-soft: #f4e8cb;
-  --frame: #4f3624; --plank: #7a5636; --cavity: #ece2cb; --inlay: rgb(226 190 116 / 55%); --frame-ink: #f5ead3; --frame-gold: #e6c47c;
+  --frame: #efe5cf; --plank: #a27a49; --cavity: #fcf8ef; --inlay: rgb(180 138 58 / 55%); --frame-ink: #2a1e14; --frame-gold: #855c10;
+  --case-shade: rgb(84 58 22 / 4%); --lv-warn: #8f560a; --lv-bad: #a3261d; --tool-bg: var(--surface);
   --brass-hi: #f2dca0; --brass: #d9b765; --brass-lo: #b8903f; --plate-ink: #2e1d0e; --screw: rgb(92 62 22 / 75%);
   --warn: #a2650f; --bad: #a3261d; --bad-soft: #f8e2dc; --mark: #f6da86;
   --f-title: "Amiri", "Noto Naskh Arabic", "Times New Roman", serif;
@@ -74,6 +75,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
   --bg: #0b1310; --surface: #111c17; --ink: #f0e7d4; --muted: #b5a88e; --faint: #8f836e; --line: #22312a; --rule: #5b4b2b; --gold: #c9a24f; --wm: .13;
   --accent: #62c6a1; --accent-soft: #14302a; --accent-ink: #07120e; --gilt: #dcb865; --gilt-soft: #2a2414;
   --frame: #2b1e15; --plank: #5a4030; --cavity: #16120d; --inlay: rgb(201 162 79 / 45%); --frame-ink: #efe3c9; --frame-gold: #dcb865;
+  --case-shade: rgb(0 0 0 / 12%); --lv-warn: #ffd38a; --lv-bad: #ffb4a8; --tool-bg: rgb(255 240 210 / 8%);
   --brass-hi: #cfb26c; --brass: #b38f45; --brass-lo: #8f6d2d; --plate-ink: #1c1208; --screw: rgb(40 26 8 / 80%); --peek: #f0e7d4;
   --warn: #e0a347; --bad: #f0806f; --bad-soft: #3a1c19; --mark: #5e4a14;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 30%); color-scheme: dark; } }
@@ -81,6 +83,7 @@ body { background: var(--bg); color: var(--ink); padding-bottom: calc(var(--tabh
   --bg: #0b1310; --surface: #111c17; --ink: #f0e7d4; --muted: #b5a88e; --faint: #8f836e; --line: #22312a; --rule: #5b4b2b; --gold: #c9a24f; --wm: .13;
   --accent: #62c6a1; --accent-soft: #14302a; --accent-ink: #07120e; --gilt: #dcb865; --gilt-soft: #2a2414;
   --frame: #2b1e15; --plank: #5a4030; --cavity: #16120d; --inlay: rgb(201 162 79 / 45%); --frame-ink: #efe3c9; --frame-gold: #dcb865;
+  --case-shade: rgb(0 0 0 / 12%); --lv-warn: #ffd38a; --lv-bad: #ffb4a8; --tool-bg: rgb(255 240 210 / 8%);
   --brass-hi: #cfb26c; --brass: #b38f45; --brass-lo: #8f6d2d; --plate-ink: #1c1208; --screw: rgb(40 26 8 / 80%); --peek: #f0e7d4;
   --warn: #e0a347; --bad: #f0806f; --bad-soft: #3a1c19; --mark: #5e4a14;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 30%); color-scheme: dark; }
@@ -147,10 +150,10 @@ header.top { position: relative; padding-block: 18px 16px; display: grid; justif
   -webkit-mask: var(--orn-x) center / contain no-repeat; mask: var(--orn-x) center / contain no-repeat; }
 .find input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent), var(--shadow); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); padding: 2px; }
-.seg button { border: 0; background: transparent; padding: 6px 14px; min-height: 34px; border-radius: 999px; cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+.seg button { border: 0; background: transparent; padding: 6px 14px; min-height: 40px; border-radius: 999px; cursor: pointer; font-size: 0.85rem; color: var(--muted); }
 .seg button:hover { color: var(--accent); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 500; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent); }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 13px; min-height: 34px; cursor: pointer; font-size: 0.85rem; color: var(--ink); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; min-height: 44px; cursor: pointer; font-size: 0.85rem; color: var(--ink); }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .btn.danger { color: var(--bad); }
@@ -189,9 +192,9 @@ header.top { position: relative; padding-block: 18px 16px; display: grid; justif
   .work { padding-top: 4px; }
 }
 
-/* the bookcase: walnut, a gold inlay line inside its edge */
-.case { background: var(--frame); background-image: linear-gradient(180deg, rgb(255 255 255 / 5%), transparent 40%, rgb(0 0 0 / 12%)); border-radius: 10px; padding: 12px 12px 6px;
-  box-shadow: inset 0 0 0 5px var(--frame), inset 0 0 0 6px var(--inlay), 0 2px 4px rgb(40 24 8 / 18%), 0 12px 28px rgb(40 24 8 / 14%); }
+/* the bookcase: a paper board with a gold inlay line inside its edge (walnut in the dark theme) */
+.case { background: var(--frame); background-image: linear-gradient(180deg, rgb(255 255 255 / 5%), transparent 40%, var(--case-shade)); border-radius: 10px; padding: 12px 12px 6px;
+  box-shadow: inset 0 0 0 5px var(--frame), inset 0 0 0 6px var(--inlay), 0 1px 2px rgb(40 24 8 / 10%), 0 8px 22px rgb(40 24 8 / 8%); }
 .casehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--frame-ink); padding: 4px 4px 10px; flex-wrap: wrap; }
 .casehead h2 { margin: 0; font-family: var(--f-title); font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
 /* the case name on a small brass plate fixed to the walnut: a soft bevel and a pin at each end */
@@ -207,23 +210,23 @@ header.top { position: relative; padding-block: 18px 16px; display: grid; justif
 @media (max-width: 400px) { .casehead h2:has(input) { padding-inline: 14px; } }
 .casehead h2 input:focus { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 .casehead .tools { display: flex; gap: 6px; }
-.casehead .btn { background: rgb(255 240 210 / 8%); border-color: color-mix(in srgb, var(--frame-gold) 45%, transparent); color: var(--frame-ink); min-height: 34px; }
-.casehead .btn:hover { background: rgb(255 240 210 / 16%); border-color: var(--frame-gold); color: var(--frame-ink); }
-.casehead .btn.danger { color: #ffc2b8; border-color: rgb(255 180 168 / 45%); }
+.casehead .btn { background: var(--tool-bg); border-color: color-mix(in srgb, var(--frame-gold) 45%, transparent); color: var(--frame-ink); min-height: 44px; min-width: 44px; }
+.casehead .btn:hover { border-color: var(--frame-gold); color: var(--frame-ink); }
+.casehead .btn.danger { color: var(--lv-bad); border-color: color-mix(in srgb, var(--lv-bad) 45%, transparent); }
 .level:focus-visible { outline-color: var(--frame-gold); }
 .level { display: block; width: 100%; border: 0; padding: 0; margin: 0 0 8px; background: none; cursor: pointer; text-align: start; color: inherit; border-radius: 4px; }
 .lvhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--frame-ink); font-size: 0.78rem; padding: 0 2px 4px; }
 .lvhead .code { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--frame-gold); letter-spacing: .04em; }
 .lvhead .lab { font-family: var(--f-ar); opacity: .92; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; text-align: center; }
 .lvhead .fill { font-variant-numeric: tabular-nums; opacity: .92; }
-.lvhead .fill.warn { color: #ffd38a; opacity: 1; } .lvhead .fill.bad { color: #ffb4a8; font-weight: 700; opacity: 1; }
+.lvhead .fill.warn { color: var(--lv-warn); opacity: 1; } .lvhead .fill.bad { color: var(--lv-bad); font-weight: 700; opacity: 1; }
 .cavity { background: var(--cavity); height: 74px; border-radius: 3px 3px 0 0; display: flex; align-items: flex-end; gap: 1px; padding: 7px 4px 0; overflow: hidden;
   box-shadow: inset 0 7px 9px -7px rgb(30 18 6 / 45%), inset 0 0 0 1px rgb(30 18 6 / 12%); }
 .cavity.rtl { direction: rtl; }
 .cavity.titled { height: 150px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .cavity.titled .spine { flex: var(--n) 0 calc(var(--n) * 18px); }
 .cavity.titled .spine .st { font-size: 12px; }
-.plank { height: 8px; background: var(--plank); border-radius: 0 0 3px 3px; box-shadow: inset 0 1px 0 rgb(255 226 160 / 35%), 0 2px 3px rgb(0 0 0 / 25%); }
+.plank { height: 6px; background: var(--plank); border-radius: 0 0 3px 3px; box-shadow: inset 0 1px 0 rgb(255 226 160 / 35%), 0 1px 2px rgb(40 24 8 / 20%); }
 .level[aria-pressed="true"] .cavity { box-shadow: inset 0 0 0 2px var(--accent), inset 0 7px 9px -7px rgb(30 18 6 / 45%); }
 .level[aria-pressed="true"] .plank { background: var(--frame-gold); }
 .level.over .plank { background: var(--bad); }
@@ -282,15 +285,16 @@ header.top { position: relative; padding-block: 18px 16px; display: grid; justif
 .spine.peek { outline: 2px solid var(--peek, var(--surface)); outline-offset: -2px; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .bookcard, .bookcard.on { transition: none; } }
 /* Walk me there: opens the 3D Library and walks to the book */
-.walk { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 7px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: .84rem; text-decoration: none; justify-self: start; margin-top: 4px;
+.walk { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 7px 16px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: .84rem; text-decoration: none; justify-self: start; margin-top: 4px;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 50%, transparent); }
 .walk:hover { background: color-mix(in srgb, var(--accent) 86%, var(--ink)); color: var(--accent-ink); }
 .it .chips { align-items: center; }
-.it .chips .walk { min-height: 32px; padding: 2px 11px 2px 9px; margin: 0 0 0 2px; font-size: .74rem; gap: 4px; background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
+.it .chips .walk { min-height: 36px; position: relative; padding: 2px 11px 2px 9px; margin: 0 0 0 2px; font-size: .74rem; gap: 4px; background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
+.it .chips .walk::after { content: ''; position: absolute; inset: -4px 0; } /* a 44px tap target */
 .it .chips .walk:hover { background: var(--accent); color: var(--accent-ink); }
 .it .chips .walk svg { width: 14px; height: 14px; }
 .walk svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.bookcard .walk { display: flex; width: 100%; margin-top: 11px; min-height: 40px; background: var(--accent); color: var(--accent-ink); }
+.bookcard .walk { display: flex; width: 100%; margin-top: 11px; min-height: 44px; background: var(--accent); color: var(--accent-ink); }
 .spine.hit { outline: 2px solid var(--frame-gold); outline-offset: 1px; animation: pulse 1.2s ease-in-out 3; z-index: 1; }
 @keyframes pulse { 50% { outline-color: transparent; } }
 .cavity .empty { color: var(--faint); font-size: 0.8rem; align-self: center; width: 100%; text-align: center; font-style: italic; }
@@ -382,14 +386,14 @@ body:has(#panel .actions) .toast { bottom: calc(env(safe-area-inset-bottom, 0px)
 #main::after { content: ''; display: block; width: 160px; height: 16px; margin: 26px auto 0; -webkit-mask-image: var(--orn-divider); mask-image: var(--orn-divider); opacity: .75; }
 #main:empty::after { display: none; }
 details.settings { margin: 12px 0 34px; font-size: 0.85rem; text-align: center; }
-details.settings summary { cursor: pointer; color: var(--muted); list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+details.settings summary { cursor: pointer; color: var(--muted); list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
 details.settings summary:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
 details.settings summary::-webkit-details-marker { display: none; }
 details.settings summary::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .15s; }
 details.settings[open] summary::after { transform: translateY(1px) rotate(-135deg); }
 .settings .grid { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 14px 0 6px; align-items: center; justify-content: center; }
-.settings .grid label { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
-.settings .grid input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+.settings .grid label { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.settings .grid input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); }
 .settings .note { max-width: 60ch; margin-inline: auto; color: var(--faint); }
 .settings input[type=number] { width: 4.5rem; padding: 4px 8px; min-height: 34px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
 @media (max-width: 520px) { .it { grid-template-columns: auto minmax(0, 1fr) auto; } .it .num { display: none; } }
@@ -416,10 +420,10 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
   <div id="banner"></div>
 </div></div>
 
-<div class="wrap">
+<main class="wrap">
   <div class="strip" id="strip" aria-label="Bookcases"></div>
   <div id="main"></div>
-  <details class="settings" id="settings"><summary>Shelf settings</summary>
+  <details class="settings" id="settings"><summary>Settings and notes</summary>
     <div class="grid">
       <label class="w-only">Volumes per level <input type="number" id="cap" min="10" max="120"></label>
       <label class="w-only">Most a level can take <input type="number" id="max" min="10" max="150"></label>
@@ -428,7 +432,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
     </div>
     <p class="note" style="padding:0 0 12px">Death years (AH) were added by Claude only to put books in rough chronological order; check any you rely on. Undated authors, mostly contemporary, sit at the end of each genre.</p>
   </details>
-</div>
+</main>
 <div class="toast" id="toast" hidden><div></div></div>
 
 <script>// Search engine for the library catalogue. Works in browser and node.
@@ -699,7 +703,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
     const pill = mode === 'live' ? '<span class="pill live"><i></i>Live · changes save for everyone</span>'
       : mode === 'readonly-live' ? '<span class="pill ro"><i></i>Live · view only</span>'
       : '<span class="pill ro"><i></i>Saved copy · 18 Oct 2026</span>';
-    $('#stats').innerHTML = `<span><b>${cfg.cases.length}</b> cases</span><span><b>${fmt(placed)}</b> volumes shelved</span>${tray ? `<span>${fmt(tray)} not yet shelved</span>` : ''}${pill}`;
+    $('#stats').innerHTML = `<span><b>${cfg.cases.length}</b> cases</span><span><b>${fmt(placed)}</b> volumes shelved</span>${tray ? `<span title="Books in the catalogue that are waiting in the tray to be put on a shelf">${fmt(tray)} waiting to be shelved</span>` : ''}${pill}`;
   }
   function renderBanner() {
     let msg = '';
@@ -777,7 +781,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
   }
   function renderPanel() {
     const s = shelves.get(ui.shelfId);
-    if (!s) return `<div class="panel"><div class="empty-panel">${canWrite ? 'Tap a shelf to see the books on it, put them in order, or move them.' : 'Tap a shelf to see the books on it, in order, and walk to any of them.'}</div></div>`;
+    if (!s) return `<div class="panel"><div class="empty-panel">${canWrite ? 'Tap a shelf to see the books on it, put them in order, or move them.' : 'Tap a shelf to see the books on it, in order, and walk to any of them.'}<br><small>Shelf codes: the letter is the bookcase, the number the shelf, 1 at the top (A1 is the top shelf of Case A).</small></div></div>`;
     const u = used(s);
     const g = genreSummary(s);
     const items = s.items.map((it, i) => {
