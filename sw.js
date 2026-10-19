@@ -1,9 +1,12 @@
 // Darul Uloom Library: keeps the catalogue, the shelf map and the 3D library on the device
 // so they open with no signal. Fonts and the 3D engine are part of the app, so nothing comes
 // from outside. build.py stamps VERSION on every update, so phones fetch the new pages on
-// their next visit online; fonts and the 3D engine never change and are carried over.
-const VERSION = '202610192059';
+// their next visit online; fonts and the 3D engine never change and are carried over, and so is the
+// shared book list until the catalogue changes.
+const VERSION = '202610192114';
 const CACHE = 'du-library-' + VERSION;
+// the book list the three pages share; its name changes only when the catalogue does (build.py)
+const BOOKS = './books.c3e594e8d0.json';
 const PAGES = ['./index.html', './shelves.html', './3d.html'];
 const OTHER = ['./manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './lib/three.module.js', './lib/controls/OrbitControls.js',
@@ -14,6 +17,9 @@ self.addEventListener('install', event => {
     const c = await caches.open(CACHE);
     // the search page must be saved; the rest are saved if they can be and never block the app
     await c.add(new Request('./index.html', { cache: 'reload' }));
+    // the pages can't open without the book list: carry it over if this phone has it already, else fetch it
+    const kept = await caches.match(BOOKS);
+    if (kept) await c.put(BOOKS, kept); else await c.add(new Request(BOOKS, { cache: 'reload' }));
     await Promise.all([...PAGES.slice(1), ...OTHER].map(async u => {
       try {
         if (/^\.\/(lib|fonts)\//.test(u)) { const old = await caches.match(u); if (old) return c.put(u, old); }
