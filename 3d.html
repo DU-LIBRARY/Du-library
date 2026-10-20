@@ -341,10 +341,11 @@ const genreColor = k => GC[k % GC.length];
 
 // ---------- room dimensions (metres) ----------
 const LEVELS = 6, CAP = 75;
-// The two walls as they stand, from the door: n = narrow case, w = wide case, | = a pillar between them.
+// The two walls as they stand, from the door: n = narrow case, w = wide case, | = a pillar between them,
+// s = the wider pillar between N and M where the shaykh sits (cushions and a low patla in front of it).
 // The two grey cases on the entrance wall are left out.
-const WALLS = { left: 'n|nn|nn|nn|ww', right: 'nn|nn|ww|n' };
-const WIDE = 1.15, NARROW = 0.8, PILLAR = 0.3;
+const WALLS = { left: 'n|nn|nn|nn|ww', right: 'nn|nsn|ww|n' };
+const WIDE = 1.15, NARROW = 0.8, PILLAR = 0.3, SEAT_W = 0.65;
 const H = 2.15, DEP = 0.32, SIDE_T = 0.025, PLINTH = 0.08, PLANK = 0.02, TOP_T = 0.04;
 const PITCH_Y = (H - PLINTH - TOP_T) / LEVELS;
 const GAP = 0.02, START_Z = 1.0;
@@ -352,13 +353,14 @@ const GAP = 0.02, START_Z = 1.0;
 const TB = (WIDE - 2 * SIDE_T) / CAP;
 // each wall's cases from the door: {w, z (centre, along the room)}
 function wallCases(spec) {
-  const out = [], pillars = []; let at = START_Z;
+  const out = [], pillars = [], seats = []; let at = START_Z;
   for (const ch of spec) {
     if (ch === '|') { pillars.push(-(at + PILLAR / 2 - GAP / 2)); at += PILLAR; continue; }
+    if (ch === 's') { seats.push(-(at + SEAT_W / 2 - GAP / 2)); at += SEAT_W; continue; }
     const w = ch === 'w' ? WIDE : NARROW;
     out.push({ w, z: -(at + w / 2) }); at += w + GAP;
   }
-  return { out, pillars, len: at };
+  return { out, pillars, seats, len: at };
 }
 const LW = wallCases(WALLS.left), RW = wallCases(WALLS.right);
 const N_LEFT = LW.out.length, N_RIGHT = RW.out.length;
@@ -474,6 +476,34 @@ for (const p of POS) {
 }
 // the pillars between groups of cases
 for (const [w, left] of [[LW, true], [RW, false]]) for (const z of w.pillars) slab(mats.wall, DEP + 0.06, WALL_H, PILLAR - 0.08, (left ? -1 : 1) * (ROOM_W / 2 - (DEP + 0.06) / 2), WALL_H / 2, z);
+// the shaykh's seat: a floor cushion and backrest against the pillar, a low patla under a white cloth,
+// and a little stool with attar bottles beside it (from the user's photo, 20 Oct 2026)
+{
+  const cloth = new THREE.MeshStandardMaterial({ color: '#f2efe8', roughness: 0.95 });
+  const cushion = new THREE.MeshStandardMaterial({ color: '#45474b', roughness: 1 });
+  const glass = new THREE.MeshStandardMaterial({ color: '#e8d9a8', roughness: 0.15, metalness: 0.3, transparent: true, opacity: 0.8 });
+  const gold = new THREE.MeshStandardMaterial({ color: '#c99a4b', roughness: 0.3, metalness: 0.7 });
+  const legs = new THREE.MeshStandardMaterial({ color: '#1d1a17', roughness: 0.8 });
+  for (const [w, left] of [[LW, true], [RW, false]]) for (const z of w.seats) {
+    const sx = left ? -1 : 1, face = ROOM_W / 2 - (DEP + 0.06);           // the pillar's front face
+    slab(mats.wall, DEP + 0.06, WALL_H, SEAT_W - 0.08, sx * (ROOM_W / 2 - (DEP + 0.06) / 2), WALL_H / 2, z);
+    slab(cushion, 0.1, 0.42, 0.62, sx * (face - 0.05), 0.07 + 0.21, z);         // backrest
+    slab(cushion, 0.62, 0.07, 0.95, sx * (face - 0.31), 0.035, z);             // floor cushion
+    const px = face - 0.62;                                                     // the patla, in front of the seat
+    slab(cloth, 0.58, 0.03, 1.0, sx * px, 0.3, z);
+    slab(cloth, 0.6, 0.2, 0.01, sx * px, 0.2, z - 0.5);                         // cloth hanging over the ends
+    slab(cloth, 0.6, 0.2, 0.01, sx * px, 0.2, z + 0.5);
+    slab(cloth, 0.01, 0.2, 1.0, sx * (px - 0.29), 0.2, z);
+    for (const dz of [-0.4, 0.4]) slab(legs, 0.07, 0.1, 0.07, sx * px, 0.05, z + dz);
+    const tz = z - 0.68;                                                        // stool on the far side (towards M)
+    slab(mats.wood, 0.34, 0.03, 0.3, sx * (face - 0.62), 0.33, tz);
+    for (const [dx, dz] of [[-0.14, -0.12], [0.14, -0.12], [-0.14, 0.12], [0.14, 0.12]]) slab(mats.wood, 0.03, 0.32, 0.03, sx * (face - 0.62 + dx), 0.16, tz + dz);
+    [-0.06, 0, 0.06].forEach((dz, k) => {
+      slab(glass, 0.03, 0.06, 0.03, sx * (face - 0.56), 0.375, tz + dz);
+      slab(k === 2 ? cushion : gold, 0.018, 0.025, 0.018, sx * (face - 0.56), 0.42, tz + dz);
+    });
+  }
+}
 // entrance marker
 const doorSign = labelSprite('Door', ''); doorSign.scale.set(0.5, 0.31, 1); doorSign.position.set(0, 2.35, -0.05); scene.add(doorSign);
 
