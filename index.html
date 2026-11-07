@@ -576,8 +576,7 @@ footer::before { content: ''; width: 160px; height: 16px; margin-bottom: 8px; -w
   const WEIGHT = { t: 1, a: 0.8, m: 0.6, p: 0.4, o: 0.4 };
 
   function buildIndex(books) {
-    const nm = []; for (const b of books) nm.push(...splitNames(b));
-    AUTH = authorGroups(nm);
+    if (books.length > 50) { const nm = []; for (const b of books) nm.push(...splitNames(b)); AUTH = authorGroups(nm); }
     for (const b of books) {
       b._n = {}; b._s = {};
       for (const f of ['t', 'a', 'm', 'p', 'o']) {
