@@ -824,8 +824,9 @@ renderer.domElement.addEventListener('pointerup', e => {
 });
 
 // ---------- search ----------
+const norm0 = s => s.replace(/\p{Nd}/gu, ch => { let cp = ch.codePointAt(0), n = 0; while (/\p{Nd}/u.test(String.fromCodePoint(cp - n - 1))) n++; return ch <= '9' ? ch : n % 10; });
 function norm(s) {
-  return String(s || '').normalize('NFKC').replace(/[ً-ٰٟـ]/g, '')
+  return norm0(String(s || '')).normalize('NFKC').replace(/[ً-ٰٟـ]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/[ىیےئ]/g, 'ي').replace(/[ةۃ]/g, 'ه').replace(/[ھہ]/g, 'ه').replace(/[کگ]/g, 'ك').replace(/ؤ/g, 'و')
     .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[ʿʾ’‘'`]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
@@ -840,6 +841,7 @@ function search() {
     return `<button type="button" class="res" data-run="${i}"><span class="rt" dir="auto">${esc(bk.t)}</span><span class="ra" dir="auto">${esc(bk.a)}</span><span class="rl">${codeOf(r)}</span></button>`; }).join('')
     : `<p class="none">Nothing on the shelves matches that.</p>`;
 }
+$('#q').addEventListener('input', e => { const q = e.target, f = norm0(q.value); if (f !== q.value) { const p = q.selectionStart; q.value = f; try { q.setSelectionRange(p, p); } catch (x) {} } }, true);
 let st; $('#q').addEventListener('input', () => { clearTimeout(st); st = setTimeout(search, 120); });
 $('#results').addEventListener('click', e => { const b = e.target.closest('[data-run]'); if (b) select(+b.dataset.run, true); });
 
