@@ -425,9 +425,9 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
   <div id="main"></div>
   <details class="settings" id="settings"><summary>Settings and notes</summary>
     <div class="grid">
-      <label class="w-only">Volumes per level <input type="number" id="cap" min="10" max="120"></label>
-      <label class="w-only">Most a level can take <input type="number" id="max" min="10" max="150"></label>
-      <label class="w-only">Levels per bookcase <input type="number" id="lvls" min="1" max="10"></label>
+      <label class="w-only">Volumes per level <input type="text" inputmode="numeric" id="cap" min="10" max="120"></label>
+      <label class="w-only">Most a level can take <input type="text" inputmode="numeric" id="max" min="10" max="150"></label>
+      <label class="w-only">Levels per bookcase <input type="text" inputmode="numeric" id="lvls" min="1" max="10"></label>
       <label><input type="checkbox" id="rtl"> Books run right to left on the drawing</label>
     </div>
     <p class="note" style="padding:0 0 12px">Death years (AH) were added by Claude only to put books in rough chronological order; check any you rely on. Undated authors, mostly contemporary, sit at the end of each genre.</p>
@@ -443,10 +443,26 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
     [/ؤ/g, 'و'], [/ء/g, ''], [/پ/g, 'ب'], [/چ/g, 'ج'], [/ژ/g, 'ز'], [/ٹ/g, 'ت'], [/ڈ/g, 'د'], [/ڑ/g, 'ر'], [/ں/g, 'ن'],
   ];
 
+  // Digits of any script (Arabic-Indic ٠١٢, Urdu ۰۱۲, Devanagari, Bengali...) -> 0-9
+  const NDIGIT = /\p{Nd}/u, digitCache = new Map();
+  function digits(s) {
+    if (!s) return s || '';
+    return String(s).replace(/\p{Nd}/gu, ch => {
+      if (ch <= '9') return ch;
+      let v = digitCache.get(ch);
+      if (v === undefined) {
+        let cp = ch.codePointAt(0), n = 0;
+        while (NDIGIT.test(String.fromCodePoint(cp - n - 1))) n++;
+        v = String(n % 10); digitCache.set(ch, v);
+      }
+      return v;
+    });
+  }
+
   // Spelling-insensitive text: folds Arabic/Urdu letter variants, removes harakat and the article ال.
   function norm(s) {
     if (!s) return '';
-    s = s.normalize('NFKC').replace(DIAC, '').replace(/[ؤء]و/g, 'و');
+    s = digits(s).normalize('NFKC').replace(DIAC, '').replace(/[ؤء]و/g, 'و');
     for (const [a, b] of AR_FOLD) s = s.replace(a, b);
     s = s.replace(/(\S{2,})وه(?=\s|$)/g, '$1اه');   // Urdu-style صلوة/زكوة/مشكوة = صلاة/زكاة/مشكاة
     s = s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -569,10 +585,70 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
     return best;
   }
 
+
+  // ---- one person, many spellings: the same author written in Arabic, Urdu or English is one author ----
+  const HONOR = new Set(['الامام','امام','الشيخ','شيخ','الدكتور','دكتور','د','مولانا','مولنا','مولوي','حضرت','حضره','مفتي','الحافظ','حافظ','العلامه','علامه','قاضي','القاضي','استاذ','الاستاذ','ابن','بن','بنت','ال','محقق','سيد','السيد','صاحب','رحمه','الله','رح',
+    'imam','shaykh','sheikh','shaikh','sheik','dr','prof','mufti','moulana','maulana','molana','mawlana','maulvi','hazrat','hadrat','hafiz','allamah','allama','qari','qadi','ustadh','ustaz','sayyid','syed','sahib','ibn','bin','b','ibnu','mr','hakim','hakeem','al','el']);
+  const vkey = v => collapse(v.replace(/a/g, ''));
+  function nameWords(name) {
+    const out = [];
+    for (const w of name.normalize('NFKC').split(/[^\p{L}]+/u).filter(Boolean)) {
+      const nw = norm(w);
+      if (!nw || HONOR.has(nw) || HONOR.has(w.toLowerCase())) continue;
+      const alts = (isAr(w) ? arWord(w) : latWord(w)).filter(a => a.s.length > 1 || vkey(a.v).length > 1).map(a => a.s + '|' + vkey(a.v));
+      if (alts.length) out.push({ n: nw, k: alts });
+    }
+    return out;
+  }
+  const wordsMatch = (a, b) => a.n === b.n || a.k.some(x => b.k.includes(x));
+  // names -> id; names that share all their significant words (shorter inside longer) get the same id
+  function authorGroups(names) {
+    const list = [...new Set(names)].map(n => ({ n, w: nameWords(n) })).filter(x => x.w.length);
+    const parent = new Map(list.map(x => [x.n, x.n]));
+    const find = x => { while (parent.get(x) !== x) { parent.set(x, parent.get(parent.get(x))); x = parent.get(x); } return x; };
+    const byKey = new Map(), freq = new Map();
+    for (const x of list) {
+      const seen = new Set();
+      for (const w of x.w) for (const k of w.k) { if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(x); seen.add(k); }
+      if (!/[A-Za-z]/.test(x.n)) for (const k of seen) freq.set(k, (freq.get(k) || 0) + 1);   // how common a word is among Arabic-script names
+    }
+    const wf = w => Math.max(...w.k.map(k => freq.get(k) || 0));
+    // spelling variants inside one script are one name already
+    const byNorm = new Map();
+    for (const x of list) { const k = norm(x.n); if (byNorm.has(k)) parent.set(find(x.n), find(byNorm.get(k))); else byNorm.set(k, x.n); }
+    const hasLat = n => /[A-Za-z]/.test(n);
+    const done = new Set();
+    for (const x of list) {
+      const cands = new Set();
+      for (const w of x.w) for (const k of w.k) { if (byKey.get(k).length < 400) for (const y of byKey.get(k)) if (y !== x && hasLat(y.n) !== hasLat(x.n)) cands.add(y); }
+      for (const y of cands) {
+        const id = x.n < y.n ? x.n + '\u0001' + y.n : y.n + '\u0001' + x.n;
+        if (done.has(id)) continue; done.add(id);
+        if (find(x.n) === find(y.n)) continue;
+        const [S, L] = x.w.length <= y.w.length ? [x, y] : [y, x];
+        if (!S.w.every(w => L.w.some(l => wordsMatch(w, l)))) continue;
+        // the match must rest on a name word that few authors share (not محمد / Abdul Rahman)
+        if (!S.w.some(w => wf(w) <= 8)) continue;
+        const covered = L.w.filter(l => S.w.some(w => wordsMatch(w, l))).length;
+        // a lone name (النووي / Nawawi) must be the family/last name of the longer one
+        if (S.w.length === 1) { if (S.w[0].n.length < 4 || wf(S.w[0]) > 3 || !wordsMatch(S.w[0], L.w[L.w.length - 1])) continue; }
+        else if (covered / L.w.length < 0.5) continue;
+        parent.set(find(x.n), find(y.n));
+      }
+    }
+    const ids = new Map();
+    for (const x of list) ids.set(x.n, find(x.n));
+    return ids;
+  }
+  let AUTH = new Map();
+  const splitNames = b => [...(b.a || '').split(' / '), ...(b.m || '').split(' / ')].map(s => s.trim()).filter(Boolean);
+  function authorId(name) { name = (name || '').trim(); return AUTH.get(name) || ('n:' + norm(name)); }
+
   const FIELDS = { all: ['t', 'a', 'm', 'p', 'o'], title: ['t'], author: ['a', 'm', 'o'], publisher: ['p'] };
   const WEIGHT = { t: 1, a: 0.8, m: 0.6, p: 0.4, o: 0.4 };
 
   function buildIndex(books) {
+    if (books.length > 50) { const nm = []; for (const b of books) nm.push(...splitNames(b)); AUTH = authorGroups(nm); }
     for (const b of books) {
       b._n = {}; b._s = {};
       for (const f of ['t', 'a', 'm', 'p', 'o']) {
@@ -580,6 +656,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
         b._s[f] = skelWords(b[f] || '');
       }
       b._sortKey = b._n.t;
+      b._ag = [...new Set(splitNames(b).map(authorId))];
     }
     return books;
   }
@@ -632,6 +709,13 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
       }
       if (bestF < 99) close.push({ b, score: bestF });
     }
+    if (scope === 'author' && exact.length) {
+      // every book by the same person, whichever language the name is written in
+      const ids = new Set(); for (const x of exact) for (const g of x.b._ag || []) ids.add(g);
+      const have = new Set(exact.map(x => x.b));
+      for (const b of books) if (!have.has(b) && (b._ag || []).some(g => ids.has(g))) exact.push({ b, score: 0.5 });
+      for (let i = close.length - 1; i >= 0; i--) if (exact.some(x => x.b === close[i].b)) close.splice(i, 1);
+    }
     exact.sort((x, y) => y.score - x.score || x.b._sortKey.localeCompare(y.b._sortKey, 'ar'));
     close.sort((x, y) => x.score - y.score || x.b._sortKey.localeCompare(y.b._sortKey, 'ar'));
     // keep only close matches near the best one
@@ -640,7 +724,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
     return { exact, close: close.filter(x => x.score <= cut).slice(0, 80) };
   }
 
-  root.LibSearch = { norm, skelWords, buildIndex, search };
+  root.LibSearch = { digits, authorId, norm, skelWords, buildIndex, search };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script type="application/json" id="books"></script>
@@ -1041,6 +1125,8 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
 
   // find a book
   let ft;
+  document.addEventListener('input', e => { const q = e.target; if (!['cap', 'max', 'lvls'].includes(q.id)) return; const f = LibSearch.digits(q.value); if (f !== q.value) q.value = f; }, true);
+  $('#q').addEventListener('input', e => { const q = e.target, f = LibSearch.digits(q.value); if (f !== q.value) { const p = q.selectionStart; q.value = f; try { q.setSelectionRange(p, p); } catch (x) {} } }, true);
   $('#q').addEventListener('input', () => { clearTimeout(ft); ft = setTimeout(find, 140); });
   $('#q').addEventListener('focus', () => { if ($('#q').value.trim()) find(); });
   document.addEventListener('pointerdown', e => { if (!e.target.closest('.find')) $('#results').hidden = true; });
@@ -1113,7 +1199,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
 
 </body></html>
 
-<nav class="apptabs" aria-label="Sections"><a href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a></nav>
+<nav class="apptabs" aria-label="Sections"><a href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a><a href="dars.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg><span>Dars</span></a></nav>
 
 <script>
 // The book list is shared by the three pages in one file, kept on the device (see build.py).
@@ -1143,7 +1229,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
       old.replaceWith(s);
     });
   }
-  fetch('books.c3e594e8d0.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
+  fetch('books.b0a70a32c4.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
     for (var id in NEED) { var el = document.getElementById(id); el.textContent = JSON.stringify(build(P, NEED[id], el)); }
     start();
   }).catch(function () {
@@ -1164,7 +1250,7 @@ details.settings[open] summary::after { transform: translateY(1px) rotate(-135de
   var page = location.href.split('#')[0].split('?')[0]; if (/\/$/.test(page)) page += 'index.html';
   function check() {
     // the page and the shared book list it needs must both be saved
-    return Promise.all([caches.match(page), caches.match('books.c3e594e8d0.json')]).then(function (h) {
+    return Promise.all([caches.match(page), caches.match('books.b0a70a32c4.json')]).then(function (h) {
       var hit = h[0] && h[1];
       if (!foot) return !!hit;
       if (hit) say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you’re offline now'));
