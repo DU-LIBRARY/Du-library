@@ -1,14 +1,14 @@
-// Darul Uloom Library: keeps the catalogue, the shelf map and the 3D library on the device
+// Darul Uloom Library: keeps the catalogue, the shelf map, the 3D library and the dars list on the device
 // so they open with no signal. Fonts and the 3D engine are part of the app, so nothing comes
 // from outside. build.py stamps VERSION on every update, so phones fetch the new pages on
 // their next visit online; fonts and the 3D engine never change and are carried over, and so is the
 // shared book list until the catalogue changes.
-const VERSION = '202610201006';
+const VERSION = '202611082151';
 const CACHE = 'du-library-' + VERSION;
 // the book list the three pages share; its name changes only when the catalogue does (build.py)
-const BOOKS = './books.c3e594e8d0.json';
-const PAGES = ['./index.html', './shelves.html', './3d.html'];
-const OTHER = ['./manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
+const BOOKS = './books.1ec149866e.json';
+const PAGES = ['./index.html', './shelves.html', './3d.html', './dars.html'];
+const OTHER = ['./darsi-kutub.csv', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './lib/three.module.js', './lib/controls/OrbitControls.js',
   './fonts/amiri-400.woff', './fonts/amiri-700.woff', './fonts/plexarabic-400.woff', './fonts/plexarabic-500.woff',
   './fonts/plexarabic-600.woff', './fonts/plexsans-400.woff', './fonts/plexsans-500.woff', './fonts/plexsans-600.woff'];
@@ -50,7 +50,9 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   // a page: try the internet briefly for a newer version, otherwise open the saved copy at once
-  if (req.mode === 'navigate') {
+  // (a download such as darsi-kutub.csv is not a page: it is served like the files below)
+  const last = url.pathname.split('/').pop();
+  if (req.mode === 'navigate' && (!last || last.endsWith('.html') || !last.includes('.'))) {
     const key = pageKey(url);
     event.respondWith((async () => {
       const c = await caches.open(CACHE);

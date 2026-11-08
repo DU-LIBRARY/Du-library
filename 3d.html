@@ -990,7 +990,7 @@ const cameFrom = (() => {
   try {
     const r = new URL(document.referrer);
     if (r.origin !== location.origin || history.length < 2) return '';
-    return /shelves\.html$/.test(r.pathname) ? 'Shelf Map' : /(index\.html|\/)$/.test(r.pathname) ? 'Search' : '';
+    return /shelves\.html$/.test(r.pathname) ? 'Shelf Map' : /dars\.html$/.test(r.pathname) ? 'Dars' : /(index\.html|\/)$/.test(r.pathname) ? 'Search' : '';
   } catch (e) { return ''; }
 })();
 walkBox.addEventListener('click', e => {
@@ -1082,14 +1082,14 @@ setTimeout(walkFromHash, 250);
 try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to look · pinch to zoom · tap a book'; } catch (e) {}
 </script>
 
-<nav class="apptabs" aria-label="Sections"><a href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a></nav>
+<nav class="apptabs" aria-label="Sections"><a href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a><a href="dars.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg><span>Dars</span></a></nav>
 
 <script>
 // The book list is shared by the three pages in one file, kept on the device (see build.py).
 // Rebuild the data this page expects from it, then start the page's own scripts.
 (function () {
   var NEED = {"data": "3d"};
-  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
+  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d", "y", "mc"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
   function pick(b, F) { var r = {}; F.forEach(function (f) { if (b && f in b) r[f] = b[f]; }); return r; }
   function libBase(B, i) { var r = pick(B[i], LIB_F); if ('k' in r) r.k = [r.k]; if ('v' in r) r.v = String(r.v); if (r.v === '1') delete r.v; return r; }
   function mapBase(B, i) { var r = pick(B[i], MAP_F); if ('v' in r) r.vs = String(r.v); return r; }
@@ -1112,7 +1112,7 @@ try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to
       old.replaceWith(s);
     });
   }
-  fetch('books.c3e594e8d0.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
+  fetch('books.1ec149866e.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
     for (var id in NEED) { var el = document.getElementById(id); el.textContent = JSON.stringify(build(P, NEED[id], el)); }
     start();
   }).catch(function () {
@@ -1133,7 +1133,7 @@ try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to
   var page = location.href.split('#')[0].split('?')[0]; if (/\/$/.test(page)) page += 'index.html';
   function check() {
     // the page and the shared book list it needs must both be saved
-    return Promise.all([caches.match(page), caches.match('books.c3e594e8d0.json')]).then(function (h) {
+    return Promise.all([caches.match(page), caches.match('books.1ec149866e.json')]).then(function (h) {
       var hit = h[0] && h[1];
       if (!foot) return !!hit;
       if (hit) say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you’re offline now'));

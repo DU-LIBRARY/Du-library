@@ -230,6 +230,10 @@ ol.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; 
 .chip.gold { background: var(--gilt-soft); border-color: transparent; color: var(--gilt); font-weight: 500; }
 .spines { display: inline-flex; gap: 1.5px; align-items: end; height: 12px; }
 .spines i { display: block; width: 3px; background: var(--gold); border-radius: 1px; }
+.darsi { font-family: var(--f-ui); font-size: 0.84rem; color: var(--muted); text-align: left; margin-top: 6px; line-height: 1.6; }
+.darsi b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.darsi a { position: relative; display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 0.78rem; text-decoration: none; }
+.darsi a::after { content: ''; position: absolute; inset: -11px -4px; } /* a 44px tap target */
 .notes { color: var(--muted); font-size: 0.84rem; font-style: italic; overflow-wrap: anywhere; }
 details.more { font-size: 0.82rem; color: var(--muted); }
 details.more summary { cursor: pointer; color: var(--faint); width: fit-content; min-height: 32px; }
@@ -694,6 +698,11 @@ footer::before { content: ''; width: 160px; height: 16px; margin-bottom: 8px; -w
     if (b.l === 'en') chips.push(`<span class="chip"><bdi>English</bdi></span>`);
     if (b.l === 'ur') chips.push(`<span class="chip"><bdi>Urdu</bdi></span>`);
     parts.push(`<div class="meta">${chips.join('')}</div>`);
+    if ('mc' in b) {
+      // a darsi kitab: one copy stays in the library, the rest are madrasah (dars) copies for the year groups
+      const yrs = b.y && b.y.length ? b.y.map(esc).join(', ') : 'not set yet (unconfirmed)';
+      parts.push(`<div class="darsi" dir="ltr"><a href="dars.html${b.y && b.y.length === 1 ? '#year=' + encodeURIComponent(b.y[0]) : ''}">Dars</a> Library copy: <b>1</b> · Madrasah copies: <b>${b.mc}</b> · Years: ${b.y && b.y.length ? `<b>${yrs}</b>` : yrs}</div>`);
+    }
     if (KNOWS) parts.push(whereHTML(b));
     else if (b.s && b.s.length) parts.push(`<a class="walk" href="${esc(WALK + '#book=' + b.s.map(encodeURIComponent).join(','))}"${/^https?:/.test(WALK) ? ' target="_blank" rel="noopener"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="m7 21 3-7 3 3v5M10 14l1-6 4 3 3 1M8 9l3-1"/></svg>Walk me there</a>`);
     if (b.n && b.n.length) parts.push(`<div class="notes" dir="auto">${b.n.map(esc).join(' · ')}</div>`);
@@ -855,14 +864,14 @@ footer::before { content: ''; width: 160px; height: 16px; margin-bottom: 8px; -w
 })();
 </script>
 
-<nav class="apptabs" aria-label="Sections"><a href="./" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a></nav>
+<nav class="apptabs" aria-label="Sections"><a href="./" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search</span></a><a href="shelves.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M3.5 15h17M8 3.5v6M12 9.5v5.5M16 15v5.5"/></svg><span>Shelf Map</span></a><a href="3d.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg><span>3D Library</span></a><a href="dars.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></svg><span>Dars</span></a></nav>
 
 <script>
 // The book list is shared by the three pages in one file, kept on the device (see build.py).
 // Rebuild the data this page expects from it, then start the page's own scripts.
 (function () {
   var NEED = {"data": "search"};
-  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
+  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d", "y", "mc"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
   function pick(b, F) { var r = {}; F.forEach(function (f) { if (b && f in b) r[f] = b[f]; }); return r; }
   function libBase(B, i) { var r = pick(B[i], LIB_F); if ('k' in r) r.k = [r.k]; if ('v' in r) r.v = String(r.v); if (r.v === '1') delete r.v; return r; }
   function mapBase(B, i) { var r = pick(B[i], MAP_F); if ('v' in r) r.vs = String(r.v); return r; }
@@ -885,7 +894,7 @@ footer::before { content: ''; width: 160px; height: 16px; margin-bottom: 8px; -w
       old.replaceWith(s);
     });
   }
-  fetch('books.c3e594e8d0.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
+  fetch('books.1ec149866e.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
     for (var id in NEED) { var el = document.getElementById(id); el.textContent = JSON.stringify(build(P, NEED[id], el)); }
     start();
   }).catch(function () {
@@ -906,7 +915,7 @@ footer::before { content: ''; width: 160px; height: 16px; margin-bottom: 8px; -w
   var page = location.href.split('#')[0].split('?')[0]; if (/\/$/.test(page)) page += 'index.html';
   function check() {
     // the page and the shared book list it needs must both be saved
-    return Promise.all([caches.match(page), caches.match('books.c3e594e8d0.json')]).then(function (h) {
+    return Promise.all([caches.match(page), caches.match('books.1ec149866e.json')]).then(function (h) {
       var hit = h[0] && h[1];
       if (!foot) return !!hit;
       if (hit) say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you’re offline now'));
