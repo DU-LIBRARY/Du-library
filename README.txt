@@ -19,7 +19,7 @@ other copies are madrasah (dars) copies used by the year groups:
 unless the catalogue gives its own number of madrasah copies (some dars books keep
 their class copies outside the library).
 
-This lives in the master catalogue only (no second list). Three optional columns per book:
+This lives in the master catalogue only (no second list). Three optional fields per book:
   Dars             yes / no
   Years            year groups, e.g. "Year 1, Year 2, Iftā"
   Madrasah copies  a number, only when it is not total copies - 1
@@ -34,9 +34,8 @@ and the 3D Library. On Search, a darsi book shows "Library copy: 1 · Madrasah c
 
 darsi-kutub.csv is the same list as a spreadsheet (Title, Author, Category, Year groups,
 Total copies, Library copy, Madrasah copies, Shelf). It is written from the catalogue on
-every update, so it always matches the app; download it from the Dars tab. dars.py holds
-the rule, the book-list keys (mc = madrasah copies, y = year groups) and the CSV writer
-that build.py uses.
+every update, so it always matches the app; download it from the Dars tab. In the book list
+a darsi book carries mc (madrasah copies) and y (year groups, once set).
 
 Updates are built and uploaded by Claude: each update stamps a new version in sw.js,
 and phones pick it up the next time the app is opened with signal.

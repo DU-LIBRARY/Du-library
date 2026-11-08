@@ -3,10 +3,10 @@
 // from outside. build.py stamps VERSION on every update, so phones fetch the new pages on
 // their next visit online; fonts and the 3D engine never change and are carried over, and so is the
 // shared book list until the catalogue changes.
-const VERSION = '202611082151';
+const VERSION = '202611082208';
 const CACHE = 'du-library-' + VERSION;
 // the book list the three pages share; its name changes only when the catalogue does (build.py)
-const BOOKS = './books.1ec149866e.json';
+const BOOKS = './books.b0a70a32c4.json';
 const PAGES = ['./index.html', './shelves.html', './3d.html', './dars.html'];
 const OTHER = ['./darsi-kutub.csv', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './lib/three.module.js', './lib/controls/OrbitControls.js',

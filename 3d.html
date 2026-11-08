@@ -824,8 +824,9 @@ renderer.domElement.addEventListener('pointerup', e => {
 });
 
 // ---------- search ----------
+const norm0 = s => s.replace(/\p{Nd}/gu, ch => { let cp = ch.codePointAt(0), n = 0; while (/\p{Nd}/u.test(String.fromCodePoint(cp - n - 1))) n++; return ch <= '9' ? ch : n % 10; });
 function norm(s) {
-  return String(s || '').normalize('NFKC').replace(/[ً-ٰٟـ]/g, '')
+  return norm0(String(s || '')).normalize('NFKC').replace(/[ً-ٰٟـ]/g, '')
     .replace(/[أإآٱ]/g, 'ا').replace(/[ىیےئ]/g, 'ي').replace(/[ةۃ]/g, 'ه').replace(/[ھہ]/g, 'ه').replace(/[کگ]/g, 'ك').replace(/ؤ/g, 'و')
     .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[ʿʾ’‘'`]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
@@ -840,6 +841,7 @@ function search() {
     return `<button type="button" class="res" data-run="${i}"><span class="rt" dir="auto">${esc(bk.t)}</span><span class="ra" dir="auto">${esc(bk.a)}</span><span class="rl">${codeOf(r)}</span></button>`; }).join('')
     : `<p class="none">Nothing on the shelves matches that.</p>`;
 }
+$('#q').addEventListener('input', e => { const q = e.target, f = norm0(q.value); if (f !== q.value) { const p = q.selectionStart; q.value = f; try { q.setSelectionRange(p, p); } catch (x) {} } }, true);
 let st; $('#q').addEventListener('input', () => { clearTimeout(st); st = setTimeout(search, 120); });
 $('#results').addEventListener('click', e => { const b = e.target.closest('[data-run]'); if (b) select(+b.dataset.run, true); });
 
@@ -1089,7 +1091,7 @@ try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to
 // Rebuild the data this page expects from it, then start the page's own scripts.
 (function () {
   var NEED = {"data": "3d"};
-  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d", "y", "mc"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
+  var LIB_F = ["t", "a", "p", "v", "c", "k", "l", "o", "e", "m", "n", "d"], MAP_F = ["t", "a", "p", "v", "c", "k", "l", "o"];
   function pick(b, F) { var r = {}; F.forEach(function (f) { if (b && f in b) r[f] = b[f]; }); return r; }
   function libBase(B, i) { var r = pick(B[i], LIB_F); if ('k' in r) r.k = [r.k]; if ('v' in r) r.v = String(r.v); if (r.v === '1') delete r.v; return r; }
   function mapBase(B, i) { var r = pick(B[i], MAP_F); if ('v' in r) r.vs = String(r.v); return r; }
@@ -1112,7 +1114,7 @@ try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to
       old.replaceWith(s);
     });
   }
-  fetch('books.1ec149866e.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
+  fetch('books.b0a70a32c4.json').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (P) {
     for (var id in NEED) { var el = document.getElementById(id); el.textContent = JSON.stringify(build(P, NEED[id], el)); }
     start();
   }).catch(function () {
@@ -1133,7 +1135,7 @@ try { if (matchMedia('(hover: none)').matches) $('#hint').textContent = 'Drag to
   var page = location.href.split('#')[0].split('?')[0]; if (/\/$/.test(page)) page += 'index.html';
   function check() {
     // the page and the shared book list it needs must both be saved
-    return Promise.all([caches.match(page), caches.match('books.1ec149866e.json')]).then(function (h) {
+    return Promise.all([caches.match(page), caches.match('books.b0a70a32c4.json')]).then(function (h) {
       var hit = h[0] && h[1];
       if (!foot) return !!hit;
       if (hit) say(true, 'Saved on this device · works without signal' + (navigator.onLine ? '' : ' · you’re offline now'));
